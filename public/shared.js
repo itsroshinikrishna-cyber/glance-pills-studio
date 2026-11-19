@@ -64,6 +64,12 @@ window.PS = (function () {
   .ps-cell .t img{width:100%;height:100%;object-fit:contain;display:block}
   .ps-cell .n{font-size:11px;padding:5px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#6c6877}
   .ps-empty{grid-column:1/-1;color:#6c6877;padding:30px;text-align:center}
+  .g{margin-top:10px}.g>summary{cursor:pointer;font-weight:700;font-size:12px}
+  .g h4{margin:12px 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6c6877}
+  .g p{margin:0;font-size:12px;line-height:1.5;color:#3c3846}
+  .g .chips span{display:inline-block;background:#fdecea;color:#8a1f1c;padding:1px 6px;margin:0 4px 4px 0;font-size:11px}
+  .g2{margin-top:6px}.g2>summary{cursor:pointer;font-size:12px;font-weight:600}
+  pre.lock{white-space:pre-wrap;font:11px/1.5 ui-monospace,Menlo,monospace;background:#fff;border:1px solid #dcd8e4;padding:8px;max-height:240px;overflow:auto;margin:6px 0 0}
   #ps-toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#15131a;color:#fff;padding:8px 14px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
   #ps-toast.show{opacity:1}`;
   document.head.appendChild(style);
@@ -160,6 +166,13 @@ Realism: real person caught in a genuine moment, unretouched natural skin with v
 
 Avoid: text, logos, watermarks, readable labels, more than one prop, more than one twist, busy backgrounds, dramatic shadows, backlighting, airbrushed or plastic skin, CGI or 3D render look, illustration, over-sharpened or HDR look, perfectly symmetrical face, extra fingers, distorted hands.`;
 
+  // Locked style block for the Product & Place pill. Change it here, in one place.
+  const HERO_STYLE = `Style: natural-light hero product still life, shot on location. Soft directional daylight from a single window or open shade, gentle shadows that give the product shape, no artificial flash. Tonal, muted colour palette where the surroundings sit in the same colour family as the product. Product in sharp focus, background softly blurred. Shot on a 50mm lens, f/4, fine film grain, clean editorial product campaign look, restrained natural colour grade.
+
+Realism: real physical materials, true-to-life metal reflections, visible fabric weave, leather grain and surface texture, tiny natural imperfections, accurate product proportions, photographed on a real camera. Any hands or skin shown have visible pores, natural creases, fine hair and uneven skin tone.
+
+Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, readable labels, more than one product, studio backdrop, gradient backdrop, dramatic shadows, CGI or 3D render look, over-glossy plastic surfaces, over-sharpened or HDR look, clutter, extra fingers, distorted hands.`;
+
   const TREATMENTS = {
     contrejour: {
       name: "Contre-jour beauty close-ups",
@@ -167,6 +180,15 @@ Avoid: text, logos, watermarks, readable labels, more than one prop, more than o
       blurb: "Tight, backlit macro crops of the moment a product is used. Premium and cinematic.",
       style: "Contre-jour backlit beauty photography: a thin crisp rim light from behind with a soft low-intensity fill, so skin texture, pores and fabric weave stay readable.",
       rules: ["One macro crop and one action per image", "One gradient colour per category: a soft glow behind the subject, falling to near-black at the edges", "Thin crisp rim light with a soft fill so skin texture stays readable", "Real, unretouched skin: never airbrushed or plastic", "Consistent 9:16 or 4:5 ratio"],
+      lock: CONTREJOUR_STYLE,
+      tips: {
+        model: "Be specific, and vary casting across images: ethnicity, gender, age range, hair.",
+        crop: "Say exactly where the frame stops and what stays visible.",
+        action: "One action only.",
+        element: "One thing catches the light.",
+        rim: "The side the thin rim light comes from.",
+        color: "One colour per category. A glow behind the subject, near-black at the edges.",
+      },
       fields: [
         { k: "model", label: "Model (ethnicity, gender, age range, hair)", ph: "a white European man in his 30s with a full dark beard" },
         { k: "crop", label: "Crop point", ph: "just below the eyes, only nose, lips and beard visible" },
@@ -191,6 +213,16 @@ Avoid: text, logos, watermarks, readable labels, more than one prop, more than o
       blurb: "Full-face model caught mid-action with the product as a prop and one unexpected twist. Fun and human.",
       style: "Playful conceptual studio portrait: soft, bright, even softbox light so the whole face is clearly lit, on a solid saturated seamless backdrop, with a visible sense of humour.",
       rules: ["One full-face model, one prop, one twist per image", "One solid saturated backdrop colour per category (flat, no gradient)", "Soft, bright, even light: no harsh shadows or backlighting", "Real, unretouched skin and a genuine facial expression", "Consistent 9:16 or 4:5 ratio"],
+      lock: PLAYFUL_STYLE,
+      tips: {
+        model: "Be specific, and vary casting across images: ethnicity, gender, age range, hair.",
+        expression: "A real, exaggerated expression with natural muscle creases.",
+        action: "One action only.",
+        product: "One prop only. Unbranded, no readable labels.",
+        twist: "One unexpected twist, never two. This is the joke.",
+        outfit: "One colour, simple, nothing busy.",
+        color: "Solid, saturated and flat. No gradient.",
+      },
       fields: [
         { k: "model", label: "Model (ethnicity, gender, age range, hair)", ph: "a Black man in his 30s with short hair and a trimmed beard" },
         { k: "expression", label: "Expression", ph: "scrunched in an exaggerated grimace" },
@@ -222,26 +254,53 @@ Avoid: text, logos, watermarks, readable labels, more than one prop, more than o
     hero: {
       name: "Hero product still life",
       focus: "Product & place",
-      blurb: "The product is the hero, shot on location in natural light with no model. Clean and product-led.",
-      style: "The product is the hero, shot on location in natural light with no model competing for attention.",
-      rules: ["One hero product or small group per image, in a real-world scene", "Essentials carry the mock \"bloom\" brand so they read as a product line", "Accessories and other products stay completely unbranded", "Consistent 9:16 or 4:5 ratio"],
+      blurb: "The product is the hero, shot on location in natural light. No face is ever shown. Clean and product-led.",
+      style: "Natural-light hero product still life shot on location: soft directional daylight, a tonal palette, product in sharp focus. No face is ever shown.",
+      rules: ["One hero product per image, shot on location in natural light", "No face, ever. A hand, wrist, clasped fingers or torso fragment is allowed", "Tonal palette: the surroundings sit in the same colour family as the product", "Real materials and textures; no studio or gradient backdrop, no logos or readable labels", "Consistent 9:16 or 4:5 ratio"],
+      lock: HERO_STYLE,
+      tips: {
+        product: "One product only: type, material and colour.",
+        placement: "Where it sits, or who holds or wears it and what they are doing.",
+        place: "One location or surface only.",
+        light: "Soft daylight from a single window or open shade. No flash.",
+        palette: "One colour family. The surroundings match the product.",
+        human: "Type none for product only, or a fragment: hand, wrist, clasped hands, torso. Never a face.",
+        crop: "Where the human fragment is cropped, e.g. the wrist, shoulder or chest.",
+      },
       fields: [
-        { k: "subject", label: "Hero product (or small group)", ph: "Amber serum bottle next to a folded towel" },
-        { k: "scene", label: "Real-world scene", ph: "Bathroom windowsill with a plant and tiled wall" },
-        { k: "light", label: "Natural light", type: "select", opts: ["Soft morning window light", "Warm late-afternoon sun", "Bright overcast daylight", "Dappled shade"] },
-        { k: "brand", label: "Branding", type: "select", opts: ["Essential: mock \"bloom\" brand", "Accessory / other: completely unbranded"] },
+        { k: "product", label: "Product (type, material, colour)", ph: "a gold-link wristband watch with a rose-pink dial" },
+        { k: "placement", label: "Placement (how it sits, is held or worn)", ph: "worn on the wrist of a Black man in his 30s who is pulling open the lapel of an olive leather jacket with the other hand" },
+        { k: "place", label: "Place (starts with a word like in / on / against)", ph: "in a plain indoor setting" },
+        { k: "light", label: "Light", ph: "soft window light from the upper left" },
+        { k: "palette", label: "Palette (one colour family)", ph: "olive green and warm gold" },
+        { k: "human", label: "Human element (type none for product only)", ph: "wrist and hand only" },
+        { k: "crop", label: "Crop point (only if there is a human element)", ph: "the shoulder" },
       ],
-      build: (v, c) => {
-        const bloom = (v.brand || "").startsWith("Essential");
-        return [
-          `Photograph for a shopping-app starter card, ${RATIO[c.ratio]}.`,
-          `Hero product still life shot on location. ${v.subject || "[hero product]"}${c.category ? ` (category: ${c.category})` : ""}, placed naturally in this scene: ${v.scene || "[real-world scene]"}.`,
-          `${v.light || "Soft morning window light"}. No people, hands or models; the product is the only hero.`,
-          bloom ? 'The packaging carries a fictional "bloom" wordmark so it reads as a house product line. No other brand names.'
-                : "Every product is completely unbranded: no logos, wordmarks or readable labels.",
-          "Editorial, realistic, shallow depth of field.",
-          FOOTER, bloom ? "No other text, watermarks or UI anywhere in the image." : NO_TEXT,
-        ].join("\n");
+      examples: [
+        { name: "Watch", values: {
+          product: "a gold-link wristband watch with a rose-pink dial",
+          placement: "worn on the wrist of a Black man in his 30s who is pulling open the lapel of an olive leather jacket with the other hand",
+          place: "in a plain indoor setting", light: "soft window light from the upper left",
+          palette: "olive green and warm gold", human: "wrist and hand only", crop: "the shoulder" } },
+        { name: "Jewellery", values: {
+          product: "three signet rings, one gold oval and one black onyx square",
+          placement: "on the clasped fingers of a mixed-race man in his 20s",
+          place: "resting against a dusty teal knit sweater", light: "low warm side light from the right",
+          palette: "teal and antique gold", human: "hands only", crop: "the wrists" } },
+        { name: "No model", values: {
+          product: "a green metal safety razor", placement: "standing upright",
+          place: "on a stone bathroom ledge beside a frosted window", light: "soft morning daylight from the left",
+          palette: "sage green and pale grey", human: "none", crop: "" } },
+      ],
+      // Base prompt + the locked style block. Empty slots stay in [BRACKETS] so they are easy to spot.
+      build: v => {
+        const place = v.place || "in [PLACE: one location or surface]", placement = v.placement || "[PLACEMENT: how it sits, is held or worn]";
+        const join = /^on\b/i.test(place) && !placement.includes(",") ? " " : ", ";   // "standing upright on a ledge"
+        const none = /^\s*(none|no|product only)\b/i.test(v.human || "");
+        const human = !v.human ? "Human element: [HUMAN ELEMENT: none / hand / wrist / clasped hands / torso fragment], cropped at [CROP POINT: wrist, shoulder, chest], no face in frame."
+          : none ? "Human element: none, product only."
+          : `Human element: ${v.human}, cropped at ${v.crop || "[CROP POINT: wrist, shoulder, chest]"}, no face in frame.`;
+        return `Hero shot of ${v.product || "[PRODUCT: type, material, colour]"}, ${placement}${join}${place}. Light: ${v.light || "[LIGHT: e.g. \"soft window light from the left\", \"low golden-hour sun from behind right\"]"}. Palette: ${v.palette || "[ONE COLOUR FAMILY]"}. ${human}\n\n${HERO_STYLE}`;
       },
     },
   };
@@ -279,9 +338,28 @@ Avoid: text, logos, watermarks, readable labels, more than one prop, more than o
     return out;
   }
 
+  /* Guidelines panel for a pill. The look / realism / never-include text is read from the same
+     locked style block that goes into every prompt, so the two can never disagree. */
+  function guideHTML(key, opts) {
+    const t = TREATMENTS[key]; if (!t) return "";
+    const rules = `<ul>${t.rules.map(r => `<li>${esc(r)}</li>`).join("")}</ul>`;
+    if (opts && opts.compact) return `<b>${esc(t.name)}</b><br>${esc(t.style)}${rules}<a href="generate?treatment=${esc(key)}">Full guidelines and prompt builder →</a>`;
+    const parts = String(t.lock || "").split("\n\n");
+    const get = h => { const p = parts.find(x => x.startsWith(h + ":")); return p ? p.slice(h.length + 1).trim() : ""; };
+    const avoid = get("Avoid").replace(/\.$/, "").split(", ").filter(Boolean);
+    return `<b>How we use it</b>${rules}
+      <details class="g" open><summary>Full guidelines</summary>
+        <h4>The look</h4><p>${esc(get("Style"))}</p>
+        <h4>Keep it real</h4><p>${esc(get("Realism"))}</p>
+        <h4>Never include</h4><div class="chips">${avoid.map(a => `<span>${esc(a)}</span>`).join("")}</div>
+        <h4>Locked style block</h4><p>Added to the end of every prompt. It can't be changed from the fields.</p>
+        <details class="g2"><summary>Show the exact text</summary><pre class="lock">${esc(t.lock || "")}</pre></details>
+      </details>`;
+  }
+
   function offlineMsg(cfg) {
     return `<b>Shared storage isn't connected</b>${cfg && cfg.reason ? " (" + esc(cfg.reason) + ")" : ""}. Open <a href="api/health" target="_blank">api/health</a> to see what is missing. The setup steps are in DEPLOY.md.`;
   }
 
-  return { offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
+  return { guideHTML, offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
 })();

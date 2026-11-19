@@ -111,15 +111,16 @@ let refs=[], dirty=false, cfg={};
 function renderTiles(){
   $("#tiles").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<button class="tile ${k===treatment?"on":""}" data-k="${k}"><div class="f">${esc(t.focus)}</div><b>${esc(t.name)}</b><span>${esc(t.blurb)}</span></button>`).join("");
 }
+const tipHtml=f=>{ const tip=(PS.TREATMENTS[treatment].tips||{})[f.k]; return tip?`<div class="hint" style="margin:-2px 0 4px">${esc(tip)}</div>`:""; };
 function renderForm(){
   const t=PS.TREATMENTS[treatment];
   $("#exBtns").innerHTML=(t.examples||[]).map((x,i)=>`<button class="btn small" data-ex="${i}">Load example: ${esc(x.name)}</button>`).join("");
-  $("#rules").innerHTML=`<b>How we use it</b><ul>${t.rules.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`;
+  $("#rules").innerHTML=PS.guideHTML(treatment);
   $("#fields").innerHTML=t.fields.map(f=>{
     const v=esc(vals[treatment][f.k]??"");
-    if(f.type==="select") return `<label>${esc(f.label)}</label><select data-f="${f.k}">${f.opts.map(o=>`<option ${o===vals[treatment][f.k]?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
-    if(f.type==="color") return `<label>${esc(f.label)}</label><input type="color" data-f="${f.k}" value="${v}">`;
-    return `<label>${esc(f.label)}</label><input type="text" data-f="${f.k}" value="${v}" placeholder="${esc(f.ph||"")}">`;
+    if(f.type==="select") return `<label>${esc(f.label)}</label>${tipHtml(f)}<select data-f="${f.k}">${f.opts.map(o=>`<option ${o===vals[treatment][f.k]?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+    if(f.type==="color") return `<label>${esc(f.label)}</label>${tipHtml(f)}<input type="color" data-f="${f.k}" value="${v}">`;
+    return `<label>${esc(f.label)}</label>${tipHtml(f)}<input type="text" data-f="${f.k}" value="${v}" placeholder="${esc(f.ph||"")}">`;
   }).join("");
   $("#segment").value=common.segment; $("#category").value=common.category;
   $("#ratio").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===common.ratio));

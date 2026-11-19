@@ -331,7 +331,7 @@ function syncUI(){
     else el.value=c[k]??"";
   });
   const t=TREATMENTS[c.treatment]||TREATMENTS.contrejour;
-  $("#rules").innerHTML=`<b>${t.name}</b><br>${t.style}<ul>${t.rules.map(r=>`<li>${r}</li>`).join("")}</ul>`;
+  $("#rules").innerHTML=PS.guideHTML(c.treatment,{compact:true});
   renderMascots(); renderSwatches();
 }
 const SW_LABEL={dominant:"Dominant",darkVibrant:"Dark Vibrant",vibrant:"Vibrant",lightVibrant:"Light Vibrant",darkMuted:"Dark Muted",muted:"Muted",lightMuted:"Light Muted"};
