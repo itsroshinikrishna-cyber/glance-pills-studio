@@ -16,7 +16,7 @@ function blank(type){
   return { id:uid(), type, segment:"neutral", category:"", treatment:"contrejour",
     kicker:"", headline:"", sub:"", align:"left", img:null, zoom:1, ox:0, oy:0,
     scrimSource:"sugg1", scrimColor:"#20483a", scrimH:55,
-    question:"", subtext:"", palette:"purple", mascot:"", mascotSize:30, createdAt:Date.now() };
+    question:"", subtext:"", palette:"purple", mascot:"", mascotSize:30, mascotX:0, createdAt:Date.now() };
 }
 
 /* ---------- Image cache ---------- */
@@ -124,7 +124,9 @@ function drawPrompt(ctx,c,W,H){
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,p.from); g.addColorStop(1,p.to);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const mh=Math.max(12,Math.min(90,+c.mascotSize||30)), m=c.mascot?getImg(c.mascot):null;
-  if(m) ctx.drawImage(m,14,14,mh*m.width/m.height,mh); else drawMascotDefault(ctx,14,14,mh);
+  // mascotX: 0 = left edge, 0.5 = centre, 1 = right edge (inside the 14px margins)
+  const mw=m?mh*m.width/m.height:mh, mx=14+Math.max(0,Math.min(1,+c.mascotX||0))*Math.max(0,W-28-mw);
+  if(m) ctx.drawImage(m,mx,14,mw,mh); else drawMascotDefault(ctx,mx,14,mh);
   ctx.fillStyle="#14121a"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
   // The question sits below the mascot. A bigger mascot pushes it down, and the text shrinks a little if it would run off the card.
   const top=14+mh+26, bottom=H-(c.subtext?24:14);

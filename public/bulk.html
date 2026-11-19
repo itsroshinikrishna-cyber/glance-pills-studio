@@ -126,6 +126,7 @@
       <div data-img><label>Match images to copy by</label><div class="seg" id="o-match"><button data-v="order" class="on">Order</button><button data-v="filename">File name</button></div></div>
       <div data-prompt hidden><label>Card colour</label><select id="o-palette"><option value="rotate">Rotate the 4 brand colours</option><option value="purple">Purple</option><option value="pink">Pink</option><option value="blue">Blue</option><option value="yellow">Yellow</option></select></div>
       <div data-prompt hidden><label>Mascot size</label><input type="range" id="o-mascotSize" min="16" max="80" value="30" style="width:100%"></div>
+      <div data-prompt hidden><label>Mascot position</label><div class="seg" id="o-mx"><button data-v="0" class="on">Left</button><button data-v="0.5">Centre</button><button data-v="1">Right</button></div></div>
       <div data-prompt hidden style="grid-column:span 2"><label>Mascot</label><div id="o-mascot" class="mascots"></div>
         <label style="font-weight:500;margin-top:8px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="o-mascotRotate"> Use a different mascot on each card (rotate through all of them)</label></div>
     </div>
@@ -153,7 +154,7 @@
 "use strict";
 PS.nav("bulk");
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)], esc=PS.esc;
-const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55,mascotSize:30,mascot:"",mascotRotate:false}, ov:{}, pairs:[] };
+const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55,mascotSize:30,mascotX:0,mascot:"",mascotRotate:false}, ov:{}, pairs:[] };
 const BRAND=["purple","pink","blue","yellow"], MAX_WORDS=7;
 let MASCOTS=[];   // every mascot in the shared library
 $("#o-treatment").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<option value="${k}">${esc(t.name)}</option>`).join("");
@@ -246,7 +247,7 @@ $("#btnTpl").onclick=()=>{
 
 /* ---------- Settings ---------- */
 function bindSeg(id,key){ $(id).onclick=e=>{const b=e.target.closest("button"); if(!b) return; S.opts[key]=b.dataset.v; if(key==="match") S.matchTouched=true; $$(id+" button").forEach(x=>x.classList.toggle("on",x===b)); if(key==="match"||key==="type") S.ov={}; update();}; }
-bindSeg("#o-type","type"); bindSeg("#o-align","align"); bindSeg("#o-match","match");
+bindSeg("#o-type","type"); bindSeg("#o-align","align"); bindSeg("#o-match","match"); bindSeg("#o-mx","mascotX");
 for(const [id,k] of [["#o-segment","segment"],["#o-treatment","treatment"],["#o-grad","grad"],["#o-palette","palette"],["#o-split","split"]]) $(id).onchange=e=>{S.opts[k]=e.target.value; update();};
 $("#o-category").oninput=e=>{S.opts.category=e.target.value; update();};
 $("#o-scrimH").oninput=e=>{S.opts.scrimH=+e.target.value; update();};
@@ -291,6 +292,7 @@ function makeCard(p,i){
     c.palette=normPal(r.palette)||(o.palette==="rotate"?BRAND[i%4]:o.palette);
     if(ov.question!==undefined) c.question=ov.question; if(ov.subtext!==undefined) c.subtext=ov.subtext; if(ov.palette) c.palette=ov.palette;
     c.mascotSize=ov.mascotSize!==undefined?ov.mascotSize:o.mascotSize;
+    c.mascotX=ov.mascotX!==undefined?ov.mascotX:o.mascotX;
     // Mascot: this card's own pick, else the sheet's "mascot" column, else rotate through all, else the chosen one.
     const fromRow=r.mascot?findMascot(r.mascot):null;
     c.mascot=ov.mascot!==undefined?ov.mascot:fromRow?fromRow.url:(o.mascotRotate&&MASCOTS.length?MASCOTS[i%MASCOTS.length].url:o.mascot);
@@ -359,7 +361,7 @@ function setBar(){ const n=included().length; $("#create").disabled=!n; $("#barI
 
 /* ---------- Card editor (tap a card) ---------- */
 let EI=-1, EDSC=2;
-const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette","mascotSize","mascot"];
+const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette","mascotSize","mascot","mascotX"];
 const edOv=()=>(S.ov[EI]=S.ov[EI]||{});
 const edCard=()=>makeCard(S.pairs[EI],EI);
 function openEditor(i){ EI=i; $("#ed").hidden=false; buildEditor(); }
@@ -372,6 +374,8 @@ function buildEditor(){
     <label>Question</label><textarea data-f="question" rows="3"></textarea>
     <label>Category subtext (optional)</label><input type="text" data-f="subtext">
     <label>Mascot size</label><input type="range" data-f="mascotSize" min="16" max="80" step="1">
+    <label>Mascot position</label><div class="seg" id="edMx"><button data-mx="0">Left</button><button data-mx="0.5">Centre</button><button data-mx="1">Right</button></div>
+    <input type="range" data-f="mascotX" min="0" max="1" step="0.01" style="margin-top:6px">
     <label>Mascot</label><div id="edMascot" class="mascots"></div>
     <label>Colour</label><div class="seg" id="edPal">${BRAND.map(p=>`<button data-p="${p}">${p[0].toUpperCase()+p.slice(1)}</button>`).join("")}</div>`
   :`
@@ -414,8 +418,9 @@ $("#edCtl").addEventListener("input",e=>{
   else if(e.target.id==="edColor"){ ov.grad="custom"; ov.scrimColor=e.target.value; paintEditor(); }
 });
 $("#edCtl").addEventListener("click",e=>{
-  const ov=edOv(), a=e.target.closest("[data-a]"), g=e.target.closest("[data-g]"), p=e.target.closest("[data-p]");
-  if(a){ ov.align=a.dataset.a; paintEditor(); }
+  const ov=edOv(), a=e.target.closest("[data-a]"), g=e.target.closest("[data-g]"), p=e.target.closest("[data-p]"), mx=e.target.closest("[data-mx]");
+  if(mx){ ov.mascotX=parseFloat(mx.dataset.mx); fillEditor(); paintEditor(); }
+  else if(a){ ov.align=a.dataset.a; paintEditor(); }
   else if(g&&!g.disabled){ ov.grad=g.dataset.g; delete ov.scrimColor; paintEditor(); }
   else if(p){ ov.palette=p.dataset.p; paintEditor(); }
   else if(e.target.id==="edSplit"){
