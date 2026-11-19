@@ -167,7 +167,7 @@ $("#go").onclick=async()=>{
 
 (async()=>{
   cfg=await PS.config();
-  if(cfg.offline) $("#note").innerHTML='<div class="note"><b>Shared storage is not connected</b>, so images can\'t be generated or saved. You can still build and copy prompts.</div>', $("#go").disabled=true;
+  if(cfg.offline) $("#note").innerHTML='<div class="note">'+PS.offlineMsg(cfg)+' Images can\'t be generated or saved until then. You can still build and copy prompts.</div>', $("#go").disabled=true;
   else if(!cfg.generation) $("#note").innerHTML='<div class="note"><b>Image generation isn\'t switched on yet.</b> Ask the admin to set <code>OPENAI_API_KEY</code> in Vercel. You can still build and copy prompts.</div>', $("#go").disabled=true;
   else if(cfg.mock) $("#note").innerHTML='<div class="note">Mock mode: placeholder images only.</div>';
 })();

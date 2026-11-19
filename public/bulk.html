@@ -323,7 +323,7 @@ $("#create").onclick=async()=>{
 };
 
 (async()=>{ const cfg=await PS.config();
-  if(cfg.offline) $("#note").innerHTML='<div class="note"><b>Shared storage isn\'t connected</b>, so cards will be created in this browser only.</div>'; })();
+  if(cfg.offline) $("#note").innerHTML='<div class="note">'+PS.offlineMsg(cfg)+' Cards will be created in this browser only.</div>'; })();
 renderAll();
 </script>
 </body>

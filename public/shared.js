@@ -18,7 +18,7 @@ window.PS = (function () {
     return data;
   }
   let cfgP;
-  const config = () => cfgP || (cfgP = api("/api/config").catch(() => ({ offline: true })));
+  const config = () => cfgP || (cfgP = api("/api/config").then(c => c.ready === false ? { offline: true, reason: "no Blob storage connected" } : c).catch(e => ({ offline: true, reason: e.message })));
 
   /* ---------- Images ---------- */
   function readFile(file, max, type) {
@@ -29,12 +29,12 @@ window.PS = (function () {
         const c = document.createElement("canvas"); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
         c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
         res(type === "png" ? c.toDataURL("image/png") : c.toDataURL("image/jpeg", .9));
-      }; im.onerror = () => rej(new Error("Not a valid image")); im.src = fr.result; };
+      }; im.onerror = () => rej(new Error("Could not read this image. Use JPG, PNG or WebP (iPhone HEIC photos need converting first).")); im.src = fr.result; };
       fr.onerror = rej; fr.readAsDataURL(file);
     });
   }
   async function uploadFile(kind, file) {
-    if (!file || !file.type.startsWith("image/")) throw new Error("Please choose an image file");
+    if (!file || !(file.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|jfif|bmp)$/i.test(file.name))) throw new Error("Please choose an image file (JPG, PNG or WebP)");
     const dataUrl = await readFile(file, kind === "mascot" ? 512 : 1600, kind === "mascot" ? "png" : "jpg");
     const cfg = await config();
     if (cfg.offline) return { url: dataUrl, name: file.name, kind, offline: true };
@@ -249,5 +249,9 @@ window.PS = (function () {
     return out;
   }
 
-  return { api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
+  function offlineMsg(cfg) {
+    return `<b>Shared storage isn't connected</b>${cfg && cfg.reason ? " (" + esc(cfg.reason) + ")" : ""}. Open <a href="api/health" target="_blank">api/health</a> to see what is missing. The setup steps are in DEPLOY.md.`;
+  }
+
+  return { offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
 })();

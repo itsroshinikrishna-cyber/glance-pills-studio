@@ -75,8 +75,8 @@ async function load(){
   $("#bar").hidden = kind==="generated";
   const grid=$("#grid"); grid.innerHTML='<div class="empty">Loading…</div>';
   cfg = cfg || await PS.config();
-  $("#note").innerHTML = cfg.offline ? '<div class="note"><b>Shared library is not connected.</b> Uploads and the library need the Vercel Blob storage and API (see README). The Studio still works in this browser only.</div>' : "";
-  if (cfg.offline){ grid.innerHTML='<div class="empty">Library unavailable.</div>'; return; }
+  $("#note").innerHTML = cfg.offline ? '<div class="note">'+PS.offlineMsg(cfg)+' The library needs it, so uploads are switched off here.</div>' : "";
+  if (cfg.offline){ $("#bar").hidden=true; grid.innerHTML='<div class="empty">Library unavailable until storage is connected.</div>'; return; }
   let items=[]; try{ items=await PS.listAssets(kind); }catch(e){ grid.innerHTML=`<div class="empty">${PS.esc(e.message)}</div>`; return; }
   if(!items.length){ grid.innerHTML=`<div class="empty">No ${kind==="mascot"?"mascots":kind==="generated"?"generated images":"images"} yet.</div>`; return; }
   grid.innerHTML="";
