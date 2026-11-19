@@ -44,6 +44,10 @@ MOCK_GENERATE=1 node dev-server.js   # http://localhost:3000, data in ./.data, c
 - The AI idea box calls `api/ideas.js`. It is text only and is hidden unless `ANTHROPIC_API_KEY` is set.
 
 ## Bulk upload sheet format
+The Bulk page reads Excel (`.xlsx`, `.xls`), CSV (comma or semicolon) and pasted text. It finds the header row even with
+title rows above it, picks the sheet with card columns (with a sheet picker for multi-sheet workbooks), tells you which columns
+it used and ignored, and lists any image names that don't match. Your copy and settings are remembered in the browser.
+
 Paste from Excel/Sheets, upload `.xlsx` / `.csv`, or type one card per line (`kicker | headline | subline`).
 With a header row you can set per-card values: `image, kicker, headline, sub, segment, category, align, format, treatment, gradient` (1, 2 or 3).
 Use `\n` inside a cell for a line break. A template CSV is downloadable on the page.

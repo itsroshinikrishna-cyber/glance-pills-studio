@@ -56,6 +56,7 @@
   .bar span{color:var(--muted)}
   .empty{color:var(--muted);background:#fff;border:1px dashed var(--line);padding:40px 20px;text-align:center;grid-column:1/-1}
   .note{background:#fff7e0;border:1px solid #ecd58a;padding:10px 12px;margin-top:14px;font-size:13px}
+  .card.over{outline:2px dashed var(--accent);outline-offset:-2px;background:#f7f5fb}
   .pair .cv{cursor:pointer}
   .pair .row2{display:flex;justify-content:space-between;align-items:center;gap:6px}
   .ed{position:fixed;inset:0;background:rgba(10,8,16,.65);z-index:20;display:flex;align-items:center;justify-content:center;padding:12px}
@@ -100,7 +101,9 @@
     <div class="row" style="margin-top:10px">
       <button class="btn small" id="btnXlsx">Upload Excel / CSV…</button>
       <input type="file" id="xfile" accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt" hidden>
-      <button class="btn small" id="btnTpl">Download template (CSV)</button>
+      <select id="sheetSel" hidden title="Which sheet of the workbook to read" style="width:auto;padding:5px 8px"></select>
+      <button class="btn small" id="btnTpl">Download Excel template</button>
+      <button class="btn small" id="btnClearCopy">Clear copy</button>
       <span id="parseInfo" class="hint" style="margin:0 0 0 6px"></span>
     </div>
     <div class="hint">
@@ -136,6 +139,7 @@
   </div>
 
   <h2><b>4.</b> Check the matches <span id="count" style="text-transform:none;letter-spacing:0;font-weight:400"></span></h2>
+  <div id="matchInfo" class="note" style="margin:0 0 12px" hidden></div>
   <div class="pairs" id="pairs"><div class="empty">Add images and copy to see your cards here.</div></div>
 </main>
 
@@ -163,31 +167,38 @@ $("#o-treatment").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<option 
 
 /* ---------- Parsing the copy ---------- */
 const norm=s=>String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]/g,"");
-const SYN={image:["image","file","filename","img","photo"],kicker:["kicker","above","top","smalllineabove"],headline:["headline","title","heading","copy","text"],
-  sub:["sub","subline","subtitle","below","bottom","smalllinebelow"],segment:["segment","gender","audience"],category:["category","cat","topic"],
-  align:["align","alignment","side","textside"],format:["format","type","ratio"],treatment:["treatment","style"],gradient:["gradient","colour","color","swatch"],
-  question:["question","prompt"],subtext:["subtext"],palette:["palette"],mascot:["mascot","character"]};
+const SYN={image:["image","file","filename","img","photo","imagename","imagefile","picture","pic"],
+  kicker:["kicker","above","top","smalllineabove","leadin","lead","prefix","line1"],
+  headline:["headline","title","heading","copy","text","line","hook","caption","pilltext","maintext","copyline"],
+  sub:["sub","subline","subtitle","below","bottom","smalllinebelow","line2","suffix","qualifier","tagline"],
+  segment:["segment","gender","audience"],category:["category","cat","topic","vertical","department"],
+  align:["align","alignment","side","textside","textalign"],format:["format","type","ratio","cardformat"],treatment:["treatment","style"],
+  gradient:["gradient","colour","color","swatch","gradientcolour","gradientcolor"],
+  question:["question","prompt","userquestion"],subtext:["subtext"],palette:["palette","cardcolour","cardcolor"],mascot:["mascot","character","mascotname"]};
 const KEYOF={}; for(const k in SYN) SYN[k].forEach(a=>KEYOF[a]=k);
 const unesc=v=>String(v).replace(/\\n/g,"\n").trim();
 
 function parseCopy(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim()!=="");
-  if(!lines.length) return {rows:[],header:false};
+  if(!lines.length) return {rows:[],header:false,found:[],ignored:[]};
   const delim=lines.some(l=>l.includes("\t"))?"\t":lines.some(l=>l.includes("|"))?"|":null;
   const table=lines.map(l=>delim?l.split(delim).map(c=>c.trim()):[l.trim()]);
-  const rec=table[0].filter(c=>KEYOF[norm(c)]).length;
-  const header=rec>=1&&rec>=table[0].length/2;
-  let rows;
-  if(header){
-    const keys=table[0].map(c=>KEYOF[norm(c)]||null);
-    rows=table.slice(1).map(cells=>{const o={}; keys.forEach((k,i)=>{ if(k&&cells[i]!==undefined&&cells[i]!=="") o[k]=unesc(cells[i]); }); return o;});
+  const recOf=r=>r.filter(c=>KEYOF[norm(c)]).length;
+  // The header row is usually the first row, but sheets often have a title or a note above it.
+  let h=-1;
+  for(let i=0;i<Math.min(5,table.length);i++){ const rec=recOf(table[i]); if(rec>=2||(i===0&&rec>=1&&rec>=table[i].length/2)){ h=i; break; } }
+  let rows, found=[], ignored=[];
+  if(h>=0){
+    const head=table[h], keys=head.map(c=>KEYOF[norm(c)]||null);
+    found=[...new Set(keys.filter(Boolean))]; ignored=head.filter((c,i)=>!keys[i]&&String(c).trim()!=="");
+    rows=table.slice(h+1).map(cells=>{const o={}; keys.forEach((k,i)=>{ if(k&&cells[i]!==undefined&&cells[i]!=="") o[k]=unesc(cells[i]); }); return o;});
   } else {
     rows=table.map(cells=>{ cells=cells.map(unesc);
       if(cells.length===1) return {headline:cells[0]};
       if(cells.length===2) return {headline:cells[0],sub:cells[1]};
       return {kicker:cells[0],headline:cells[1],sub:cells[2]}; });
   }
-  return {rows:rows.filter(r=>Object.keys(r).length),header};
+  return {rows:rows.filter(r=>Object.keys(r).length),header:h>=0,found,ignored};
 }
 const normSeg=v=>{v=norm(v); return !v?null:v[0]==="f"||v==="women"?"female":v[0]==="m"?"male":"neutral";};
 const normAlign=v=>{v=norm(v); return !v?null:v[0]==="r"?"right":"left";};
@@ -221,30 +232,61 @@ $("#btnLib").onclick=async()=>{
 
 /* ---------- Excel / CSV ---------- */
 function parseCSV(text){
+  text=text.replace(/^﻿/,"");   // Excel often adds an invisible marker at the start
+  // Excel in many countries saves CSVs with ; instead of , so pick whichever the header row uses most.
+  const first=text.split(/\r?\n/,1)[0]||"", count=d=>{ let n=0,inq=false; for(const ch of first){ if(ch==='"') inq=!inq; else if(ch===d&&!inq) n++; } return n; };
+  const best=[",",";","\t"].map(d=>[d,count(d)]).sort((a,b)=>b[1]-a[1])[0], D=best[1]>0?best[0]:",";
   const rows=[]; let row=[],cell="",q=false;
   for(let i=0;i<text.length;i++){ const ch=text[i];
     if(q){ if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=ch; }
-    else if(ch==='"') q=true; else if(ch===","||ch===";"&&false){row.push(cell);cell="";}
+    else if(ch==='"') q=true; else if(ch===D){row.push(cell);cell="";}
     else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&text[i+1]==="\n") i++; row.push(cell); rows.push(row); row=[]; cell=""; }
     else cell+=ch; }
   if(cell!==""||row.length){row.push(cell);rows.push(row);}
   return rows;
 }
 const toTSV=aoa=>aoa.filter(r=>r.some(c=>String(c).trim()!=="")).map(r=>r.map(c=>String(c==null?"":c).replace(/\t/g," ").replace(/\r?\n/g,"\\n").trim()).join("\t")).join("\n");
-$("#btnXlsx").onclick=()=>$("#xfile").click();
-$("#xfile").onchange=async e=>{
-  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+let WB=null;   // the workbook that was just opened, kept so you can switch sheets
+const sheetRows=name=>XLSX.utils.sheet_to_json(WB.Sheets[name],{header:1,raw:false,defval:""});
+const hasData=a=>a.some(r=>r.some(c=>String(c).trim()!==""));
+function showSheet(name){ $("#copy").value=toTSV(sheetRows(name)); S.ov={}; update(); }
+async function readSheetFile(f){
   try{
-    let aoa;
-    if(/\.(csv|tsv|txt)$/i.test(f.name)){ const t=await f.text(); aoa=/\.tsv$/i.test(f.name)?t.split(/\r?\n/).map(l=>l.split("\t")):parseCSV(t); }
-    else { if(!window.XLSX) throw new Error("The Excel reader didn't load. Save the sheet as CSV, or paste it into the box.");
-      const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}); aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:""}); }
-    $("#copy").value=toTSV(aoa); S.ov={}; update(); PS.toast("Loaded "+f.name);
+    if(/\.(csv|tsv|txt)$/i.test(f.name)){
+      WB=null; $("#sheetSel").hidden=true;
+      const t=await f.text(), aoa=/\.tsv$/i.test(f.name)?t.replace(/^﻿/,"").split(/\r?\n/).map(l=>l.split("\t")):parseCSV(t);
+      $("#copy").value=toTSV(aoa); S.ov={}; update(); PS.toast("Loaded "+f.name); return;
+    }
+    if(!window.XLSX) throw new Error("The Excel reader didn't load. Save the sheet as CSV, or paste it into the box.");
+    WB=XLSX.read(await f.arrayBuffer(),{type:"array"});
+    const names=WB.SheetNames; if(!names.length) throw new Error("That workbook has no sheets.");
+    const sel=$("#sheetSel"); sel.innerHTML=names.map(n=>`<option>${esc(n)}</option>`).join(""); sel.hidden=names.length<2;
+    // Open the sheet whose header row looks most like card columns; if none do, the first sheet with anything in it.
+    const score=n=>Math.max(0,...sheetRows(n).filter(r=>r.some(c=>String(c).trim()!=="")).slice(0,5).map(r=>r.filter(c=>KEYOF[norm(c)]).length));
+    const ranked=names.map(n=>[n,score(n)]).sort((a,b)=>b[1]-a[1]);
+    const first=ranked[0][1]>0?ranked[0][0]:(names.find(n=>hasData(sheetRows(n)))||names[0]);
+    sel.value=first; showSheet(first);
+    PS.toast("Loaded "+f.name+(names.length>1?` (sheet “${first}”, ${names.length} sheets)`:""));
   }catch(err){ PS.toast(err.message); }
-};
+}
+$("#btnXlsx").onclick=()=>$("#xfile").click();
+$("#xfile").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) readSheetFile(f); };
+$("#sheetSel").onchange=e=>{ if(WB) showSheet(e.target.value); };
+$("#btnClearCopy").onclick=()=>{ $("#copy").value=""; WB=null; $("#sheetSel").hidden=true; S.ov={}; update(); };
+// drop an Excel/CSV file (or images) straight onto the copy box
+const copyCard=$("#copy").closest(".card");
+["dragover","dragleave","drop"].forEach(t=>copyCard.addEventListener(t,e=>{
+  e.preventDefault(); copyCard.classList.toggle("over",t==="dragover");
+  if(t==="drop"){ const fs=[...e.dataTransfer.files], pics=fs.filter(f=>f.type.startsWith("image/")), sheet=fs.find(f=>!f.type.startsWith("image/")); if(sheet) readSheetFile(sheet); if(pics.length) addFiles(pics); }
+}));
 $("#btnTpl").onclick=()=>{
-  const csv="image,headline,segment,category,align,gradient\r\n01-matcha.jpg,Find matcha mask for your skin,male,Skincare,right,1\r\n02-gym.jpg,5 gym go-tos for a beginner,male,Fitness,left,2\r\n03-gifts.jpg,Gift ideas that don't get regifted,neutral,Gifts,left,\r\n";
-  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="pills-template.csv"; a.click();
+  const rows=[["image","headline","segment","category","align","gradient"],
+    ["01-matcha.jpg","Find matcha mask for your skin","male","Skincare","right",1],
+    ["02-gym.jpg","5 gym go-tos for a beginner","male","Fitness","left",2],
+    ["03-gifts.jpg","Gift ideas that don't get regifted","neutral","Gifts","left",""]];
+  const a=document.createElement("a");
+  if(window.XLSX){ const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet(rows); ws["!cols"]=[{wch:18},{wch:40},{wch:10},{wch:12},{wch:8},{wch:9}]; XLSX.utils.book_append_sheet(wb,ws,"Cards"); XLSX.writeFile(wb,"pills-template.xlsx"); return; }
+  a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(",")).join("\r\n")+"\r\n"],{type:"text/csv"})); a.download="pills-template.csv"; a.click();
 };
 
 /* ---------- Settings ---------- */
@@ -258,7 +300,7 @@ function setGlobalFs(v){ v=Math.max(.6,Math.min(1.8,Math.round(v*100)/100)); S.o
 $("#o-fontScale").oninput=e=>setGlobalFs(+e.target.value);
 document.querySelectorAll("[data-gfs]").forEach(b=>b.onclick=()=>setGlobalFs(S.opts.fontScale+parseFloat(b.dataset.gfs)));
 const refreshMascots=()=>PS.loadMascots().then(m=>{ MASCOTS=m; update(); });
-PS.mascotPicker($("#o-mascot"),{ value:"", onPick:url=>{ S.opts.mascot=url; refreshMascots(); update(); } });
+const mp=PS.mascotPicker($("#o-mascot"),{ value:"", onPick:url=>{ S.opts.mascot=url; refreshMascots(); update(); } });
 $("#o-mascotRotate").onchange=e=>{ S.opts.mascotRotate=e.target.checked; update(); };
 refreshMascots();
 $("#copy").oninput=()=>update();
@@ -269,25 +311,43 @@ function findMascot(name){
   const n=norm(stripExt(name)); if(!n) return null;
   return MASCOTS.find(m=>norm(stripExt(m.name))===n)||MASCOTS.find(m=>norm(stripExt(m.name)).includes(n))||null;
 }
+/* Match a sheet's image name to an uploaded file: exact name (with or without .jpg), then a plain
+   number ("1" matches 01-photo.jpg but not 10-photo.jpg), then a partial match for longer names. */
 function findByName(name,imgs){
   if(!name) return null; const n=norm(stripExt(name)); if(!n) return null;
-  return imgs.find(i=>norm(stripExt(i.name))===n)||imgs.find(i=>norm(stripExt(i.name)).includes(n)||n.includes(norm(stripExt(i.name))))||null;
+  const exact=imgs.find(i=>norm(stripExt(i.name))===n); if(exact) return exact;
+  if(/^\d+$/.test(n)){ const k=String(parseInt(n,10)); return imgs.find(i=>{ const m=/^[^0-9]*0*(\d+)/.exec(stripExt(i.name)); return m&&m[1]===k; })||null; }
+  if(n.length<3) return null;
+  return imgs.find(i=>{ const x=norm(stripExt(i.name)); return x.includes(n)||(x.length>=3&&n.includes(x)); })||null;
 }
 function computePairs(){
-  const {rows,header}=parseCopy($("#copy").value), imgs=sortedImages(), o=S.opts, pairs=[];
+  const parsed=parseCopy($("#copy").value), {rows,header}=parsed, imgs=sortedImages(), o=S.opts, pairs=[], missing=[], unused=[];
   const hasImgCol=header&&rows.some(r=>r.image);
   const typeOf=r=>normFormat(r&&r.format)||o.type;
   if(o.type==="prompt"&&!rows.some(r=>normFormat(r.format)&&normFormat(r.format)!=="prompt")){
     rows.forEach(r=>pairs.push({row:r,img:null}));
   } else if(o.match==="filename"){
     const used=new Set();
-    rows.forEach(r=>{const im=typeOf(r)==="prompt"?null:findByName(r.image,imgs); if(im) used.add(im.id); pairs.push({row:r,img:im});});
-    imgs.filter(i=>!used.has(i.id)).forEach(i=>pairs.push({row:null,img:i}));
+    rows.forEach(r=>{ const isP=typeOf(r)==="prompt", im=isP?null:findByName(r.image,imgs); if(im) used.add(im.id); else if(r.image&&!isP) missing.push(r.image); pairs.push({row:r,img:im}); });
+    imgs.filter(i=>!used.has(i.id)).forEach(i=>{ unused.push(i.name); pairs.push({row:null,img:i}); });
   } else {
     const n=Math.max(rows.length,imgs.length); for(let i=0;i<n;i++) pairs.push({row:rows[i]||null,img:imgs[i]||null});
   }
   S.pairs=pairs;
-  return {rows,header,hasImgCol,nImgs:imgs.length};
+  return {rows,header,hasImgCol,nImgs:imgs.length,found:parsed.found,ignored:parsed.ignored,missing,unused};
+}
+/* A short, plain-English note about anything that didn't line up. */
+function matchSummary(info){
+  const out=[], list=a=>a.slice(0,4).map(esc).join(", ")+(a.length>4?` and ${a.length-4} more`:""), plural=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+  if(info.missing.length) out.push(`${plural(info.missing.length,"row")} in your sheet ${info.missing.length===1?"points":"point"} to an image you haven't added: <b>${list(info.missing)}</b>.`);
+  if(info.unused.length) out.push(`${plural(info.unused.length,"image")} ${info.unused.length===1?"isn't":"aren't"} used by any row: <b>${list(info.unused)}</b>.`);
+  if(S.opts.match==="order"&&S.opts.type!=="prompt"&&info.rows.length&&info.nImgs&&info.rows.length!==info.nImgs){
+    const d=Math.abs(info.rows.length-info.nImgs);
+    out.push(`You added ${plural(info.nImgs,"image")} and ${plural(info.rows.length,"line")} of copy, so the last ${plural(d,info.nImgs>info.rows.length?"image":"line")} ${d===1?"has":"have"} no ${info.nImgs>info.rows.length?"copy":"image"}.`);
+  }
+  const texts=S.pairs.map((p,i)=>{ const c=makeCard(p,i); return (c.type==="prompt"?c.question:[c.kicker,c.headline,c.sub].join(" ")).replace(/\s+/g," ").trim().toLowerCase(); }).filter(Boolean);
+  const dup=texts.length-new Set(texts).size; if(dup>0) out.push(`${plural(dup,"card")} ${dup===1?"repeats":"repeat"} text that is already on another card.`);
+  return out;
 }
 function makeCard(p,i){
   const o=S.opts, r=p.row||{}, ov=S.ov[i]||{}, type=normFormat(r.format)||o.type, c=CR.blank(type);
@@ -324,7 +384,12 @@ let t1; function update(){ clearTimeout(t1); t1=setTimeout(renderAll,200); }
 function renderAll(){
   const info=computePairs();
   $$("[data-img]").forEach(el=>el.hidden=S.opts.type==="prompt"); $$("[data-prompt]").forEach(el=>el.hidden=S.opts.type!=="prompt");
-  $("#parseInfo").textContent=info.rows.length?`${info.rows.length} line${info.rows.length>1?"s":""} read${info.header?" (with header row)":""}.`:"";
+  persist();
+  const bits=[]; if(info.rows.length) bits.push(`${info.rows.length} line${info.rows.length>1?"s":""} read${info.header?" (with header row)":""}.`);
+  if(info.header&&info.found.length) bits.push(`Columns used: ${info.found.join(", ")}.`);
+  if(info.ignored.length) bits.push(`Not recognised, so ignored: ${info.ignored.join(", ")}.`);
+  $("#parseInfo").textContent=bits.join(" ");
+  const sum=matchSummary(info), mi=$("#matchInfo"); mi.hidden=!sum.length; mi.innerHTML=sum.map(s=>"• "+s).join("<br>");
   if(info.hasImgCol&&S.opts.match==="order"&&!S.matchTouched){ S.opts.match="filename"; document.querySelectorAll("#o-match button").forEach(x=>x.classList.toggle("on",x.dataset.v==="filename")); PS.toast("Your sheet has an image column, so images are matched by file name"); return renderAll(); }
   const box=$("#pairs"); box.innerHTML="";
   if(!S.pairs.length){ box.innerHTML='<div class="empty">Add images and copy to see your cards here.</div>'; $("#count").textContent=""; setBar(); return; }
@@ -474,12 +539,32 @@ $("#create").onclick=async()=>{
       for(let k=0;k<cards.length;k+=4){ $("#barInfo").textContent=`Saving cards ${Math.min(k+4,cards.length)} of ${cards.length}…`;
         await Promise.all(cards.slice(k,k+4).map(c=>PS.api("/api/cards",{method:"PUT",body:{card:c}}))); }
     }
-    location.href="./?open="+cards[0].id;
+    finished=true; location.href="./?open="+cards[0].id;
   }catch(err){ PS.toast(err.message); btn.disabled=false; setBar(); }
 };
 
 (async()=>{ const cfg=await PS.config();
   if(cfg.offline) $("#note").innerHTML='<div class="note">'+PS.offlineMsg(cfg)+' Cards will be created in this browser only.</div>'; })();
+/* ---------- Remember your work ---------- */
+// Your copy and settings are kept in this browser so a refresh doesn't lose them (images can't be kept, so add those again).
+const SAVE_KEY="pillsStudio.bulk.v1"; let finished=false;
+function persist(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify({copy:$("#copy").value,opts:S.opts,matchTouched:!!S.matchTouched})); }catch(e){} }
+function applyOptsToUI(){
+  const o=S.opts;
+  $("#o-segment").value=o.segment; $("#o-treatment").value=o.treatment; $("#o-grad").value=o.grad; $("#o-palette").value=o.palette; $("#o-split").value=o.split; $("#o-category").value=o.category;
+  $("#o-scrimH").value=o.scrimH; $("#o-mascotSize").value=o.mascotSize; $("#o-fontScale").value=o.fontScale; $("#o-fsVal").textContent=Math.round(o.fontScale*100)+"%"; $("#o-mascotRotate").checked=!!o.mascotRotate;
+  for(const [id,k] of [["#o-type","type"],["#o-align","align"],["#o-match","match"],["#o-mx","mascotX"]]) $$(id+" button").forEach(b=>b.classList.toggle("on",b.dataset.v===String(o[k])));
+  mp.setValue(o.mascot||"");
+}
+function restore(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SAVE_KEY)||"null"); if(!s) return;
+    Object.assign(S.opts,s.opts||{}); S.matchTouched=!!s.matchTouched; applyOptsToUI();
+    if(s.copy&&s.copy.trim()){ $("#copy").value=s.copy; PS.toast("Restored your copy and settings from last time. Add your images again."); }
+  }catch(e){}
+}
+window.addEventListener("beforeunload",e=>{ if(!finished&&(S.images.length||$("#copy").value.trim())){ e.preventDefault(); e.returnValue=""; } });
+restore();
 renderAll();
 </script>
 </body>
