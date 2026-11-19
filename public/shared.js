@@ -144,28 +144,37 @@ window.PS = (function () {
   const FOOTER = "Keep the bottom 35% of the frame calm and uncluttered so overlay text stays readable.";
   const NO_TEXT = "No text, letters, logos, watermarks or UI anywhere in the image.";
 
+  // Locked style block for the contre-jour pill. Change it here, in one place.
+  const CONTREJOUR_STYLE = `Style: contre-jour backlit beauty photography. A thin crisp rim light from behind traces the edge of the subject, with a soft low-intensity fill from the front so skin texture, pores and fabric weave stay readable. No harsh shadows on the face. Smooth single-colour gradient background, brightest as a soft glow directly behind the subject and falling to near-black at the edges and corners. Shot on an 85mm lens, f/2.8, shallow depth of field, fine film grain, editorial high-end campaign look, cinematic colour grade.
+
+Realism: real person, unretouched natural skin with visible pores, fine peach fuzz, subtle uneven skin tone, tiny imperfections, flyaway hairs, slight facial asymmetry, true-to-life proportions, photographed on a real camera.
+
+Avoid: text, logos, watermarks, multiple actions, busy backgrounds, flat front lighting, airbrushed or plastic skin, CGI or 3D render look, illustration, over-sharpened or HDR look, perfectly symmetrical face, glossy waxy skin, extra fingers, distorted hands.`;
+
   const TREATMENTS = {
     contrejour: {
       name: "Contre-jour beauty close-ups",
       focus: "Light & texture",
       blurb: "Tight, backlit macro crops of the moment a product is used. Premium and cinematic.",
-      style: "Tight, backlit macro crop of the moment the product is used, with the model partly cropped and one element catching the light.",
-      rules: ["One macro crop and one action per image", "One gradient colour per category, falling to dark at the edges", "A thin rim light with a soft fill so skin and texture stay readable", "Consistent 9:16 or 4:5 ratio"],
+      style: "Contre-jour backlit beauty photography: a thin crisp rim light from behind with a soft low-intensity fill, so skin texture, pores and fabric weave stay readable.",
+      rules: ["One macro crop and one action per image", "One gradient colour per category: a soft glow behind the subject, falling to near-black at the edges", "Thin crisp rim light with a soft fill so skin texture stays readable", "Real, unretouched skin: never airbrushed or plastic", "Consistent 9:16 or 4:5 ratio"],
       fields: [
-        { k: "subject", label: "Product & moment", ph: "Hydrating serum pressed onto the cheekbone" },
-        { k: "crop", label: "Macro crop", type: "select", opts: ["Jawline & cheek", "Hands & product", "Lips", "Eyes & brow", "Hair & scalp", "Neck & shoulder"] },
-        { k: "light", label: "Backlight", type: "select", opts: ["Golden-hour rim light", "Cool window backlight", "Warm studio rim light"] },
-        { k: "color", label: "Category gradient colour", type: "color", def: "#2f6f5e" },
+        { k: "model", label: "Model (ethnicity, gender, age range, hair)", ph: "a white European man in his 30s with a full dark beard" },
+        { k: "crop", label: "Crop point", ph: "just below the eyes, only nose, lips and beard visible" },
+        { k: "action", label: "One action", ph: "head tilted back as a single drop of beard oil falls from a glass dropper held by a hand entering from the top right" },
+        { k: "element", label: "Hero element catching the light", ph: "the individual beard hairs and the amber oil drop" },
+        { k: "rim", label: "Rim light from behind", type: "select", opts: ["left", "right"] },
+        { k: "color", label: "Category colour (background gradient)", type: "color", def: "#1f7a7a" },
       ],
-      build: (v, c) => [
-        `Photograph for a shopping-app starter card, ${RATIO[c.ratio]}.`,
-        `Contre-jour beauty close-up: a tight, backlit macro crop of the ${(v.crop || "").toLowerCase()} at the moment of use. ${v.subject || "[product and moment]"}${c.category ? ` (category: ${c.category})` : ""}.`,
-        CAST[c.segment],
-        `${v.light || "Golden-hour rim light"} traces a thin rim light along the edges, with a soft fill so skin and texture stay readable. Exactly one element catches the light.`,
-        `One ${colorPhrase(v.color || "#2f6f5e")} colour gradient fills the frame and falls to dark at the edges.`,
-        "The model is partly cropped. One macro crop, one action. Realistic skin texture, shallow depth of field.",
-        FOOTER, NO_TEXT,
-      ].join("\n"),
+      example: {
+        model: "a white European man in his 30s with a full dark beard",
+        crop: "just below the eyes, only nose, lips and beard visible",
+        action: "head tilted back as a single drop of beard oil falls from a glass dropper held by a hand entering from the top right",
+        element: "the individual beard hairs and the amber oil drop",
+        rim: "left", color: "#1f7a7a",
+      },
+      // Base prompt + the locked style block. Empty slots stay in [BRACKETS] so they are easy to spot.
+      build: v => `Tight macro crop of ${v.model || "[MODEL: ethnicity, gender, age range, hair]"}, cropped ${v.crop || "[CROP POINT]"}, ${v.action || "[ONE ACTION]"}. The hero element catching the light: ${v.element || "[ONE ELEMENT]"}. Rim light from behind ${v.rim || "left"}. Background: smooth ${nameColor(v.color || "#1f7a7a")} gradient.\n\n${CONTREJOUR_STYLE}`,
     },
     playful: {
       name: "Playful conceptual portraits",
