@@ -1,13 +1,13 @@
 # Deploy Glance Pills Studio (step by step, no experience needed)
 
-Plan: **GitHub** (already done) holds the code, **Vercel** turns it into a live website, **Blob storage** keeps everyone's images and cards, and an **OpenAI key** (optional) lets the Generate page make images. Allow about 20 minutes.
+Plan: **GitHub** (already done) holds the code, **Vercel** turns it into a live website, **Blob storage** keeps everyone's images and cards, and an optional **Anthropic key** powers the AI idea suggestions on the Prompts page. Allow about 20 minutes.
 
 ## What you need first
 | Thing | Where | Needed for |
 |---|---|---|
 | GitHub account (you have one) | github.com | holds the code |
 | Vercel account | vercel.com → **Sign Up → Continue with GitHub** | hosts the site |
-| OpenAI API key | platform.openai.com → **API keys** (needs billing switched on) | only the Generate page. Skip it if you don't need image generation yet. |
+| Anthropic API key (optional) | console.anthropic.com → **API keys** | only the "Suggest 3 ideas" box on the Prompts page. Skip it if you don't need it. |
 
 > Heads-up: Vercel's free **Hobby** plan is for personal, non-commercial use. If this is for company work, use a **Pro** plan or your company's Vercel team, and check with your IT/security team before putting company images on a new account.
 
@@ -39,7 +39,7 @@ In the project, go to **Settings → Environment Variables** and add:
 | Name | Value |
 |---|---|
 | `STUDIO_PASSCODE` | a passcode you choose (stops strangers from uploading, deleting or spending your image credits) |
-| `OPENAI_API_KEY` | your key from OpenAI (skip if you aren't generating images yet) |
+| `ANTHROPIC_API_KEY` | your key from Anthropic (optional, only for the AI idea box on the Prompts page) |
 
 Leave "All Environments" ticked and click **Save** on each.
 
@@ -52,7 +52,7 @@ Open your Vercel link and tick each one:
 - [ ] **Library → Mascots:** upload a mascot PNG. It appears in the grid.
 - [ ] **Studio:** open a card, upload an image, see 3 gradient options. Click **Download PNG**.
 - [ ] **Bulk:** drop 3 images, paste 3 lines of copy, click **Create cards**. They open in the Studio.
-- [ ] **Generate:** pick a pill, fill the fields, click **Generate**. An image appears (needs the OpenAI key).
+- [ ] **Prompts:** pick a pill, click one of the ideas, then **Copy prompt**. The prompt shows no [brackets] and the page says it's ready to copy.
 - [ ] Open the link on your phone or in a private window. You should see the same cards.
 
 ## Step 7. Lock it down (recommended)
@@ -64,7 +64,7 @@ Send them the link and the passcode. The first time they upload or edit, the bro
 - **Studio:** edit one card at a time
 - **Bulk:** many images + copy at once
 - **Library:** shared images and mascots
-- **Generate:** make images for the three pills
+- **Prompts:** build the image prompt for each pill, then paste it into ChatGPT or Magnific
 
 ---
 
@@ -75,13 +75,11 @@ Send them the link and the passcode. The first time they upload or edit, the bro
 | "Saved in this browser only" or "Shared storage isn't connected" | Do Step 3, then Step 5 (redeploy) |
 | Uploads fail with "Library error" | Your Blob store is **Private**. Create a new **Public** one and connect it |
 | Asks for a passcode again and again | You typed it wrong. Clear it by opening your browser's site settings for the page, or use a private window |
-| Generate says "isn't switched on" | Add `OPENAI_API_KEY` (Step 4), then redeploy |
-| Generate errors mentioning "verification" | OpenAI may require organization verification for its image model. Do this in your OpenAI account settings |
 | Changes you made in GitHub don't show | Make sure they are on **main**. Vercel redeploys on its own within a minute or two |
 
 ## Costs
 - **Vercel:** Hobby is free; Pro is per seat. Blob has a free allowance, then small usage charges.
-- **OpenAI:** you pay per generated image (a few cents each at medium quality; check OpenAI's pricing page). The passcode and a spending limit in your OpenAI account protect you.
+- **Anthropic (optional):** the AI idea box costs a very small amount per use; check Anthropic's pricing page. The passcode keeps strangers from using it.
 
 ## Updating the site later
 Edit or ask for changes, merge to `main`, and Vercel redeploys by itself. You don't repeat these steps.

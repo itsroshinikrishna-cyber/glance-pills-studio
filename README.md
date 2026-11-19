@@ -6,8 +6,9 @@ Team tool for making Glance chat starter pills to the visual system. Three pages
 |---|---|
 | **Studio** (`/`) | Build cards. Anyone can upload or pick an image, edit the copy, choose a mascot, and export PNGs. Cards are shared: everyone sees and can edit the same set. |
 | **Bulk** (`/bulk`) | Drop many images and paste or upload the copy (Excel, CSV or lines). Images are matched to copy by order or by file name, previewed as real cards, then created in one click. Each card opens in the Studio to fine-tune, with Prev/Next to step through the batch. |
-| **Library** (`/library`) | Image dashboard and mascot dashboard (plus everything generated). Anyone can upload, reuse, copy links or delete. |
-| **Generate** (`/generate`) | Pick one of the three photo pills, fill in its focus, review the prompt and generate images. Results are saved to the Library and can be sent straight to the Studio. |
+| **Mascots** (`/mascots`) | Emoji-style mascot dashboard: click a mascot to copy it, search, drop files to add more. |
+| **Library** (`/library`) | Image and mascot library. Anyone can upload, reuse, copy links or delete. |
+| **Prompts** (`/generate`) | Prompt builder for the three photo pills: pick an idea or fill in the fields, check the guidelines, copy the prompt, and paste it into ChatGPT or Magnific. The site does not generate images. |
 
 The three pills, each with a different focus:
 1. **Contre-jour beauty close-ups**: light and texture (premium, cinematic)
@@ -26,20 +27,21 @@ bottom-left or bottom-right text only, max 7 words, square corners, four brand c
 1. Import the repo, leave Root Directory empty, framework preset **Other** (no build step).
 2. **Storage → Create → Blob** and connect it to the project. This adds `BLOB_READ_WRITE_TOKEN`, which turns on the shared library and shared cards.
 3. Add environment variables:
-   - `OPENAI_API_KEY`: switches on image generation (model `gpt-image-1`; override with `IMAGE_MODEL`, quality with `IMAGE_QUALITY`).
-   - `STUDIO_PASSCODE` *(recommended)*: when set, uploads, edits, deletes and generation need this passcode (people are asked once per browser). Viewing stays open.
+   - `ANTHROPIC_API_KEY` *(optional)*: switches on the AI "Suggest 3 ideas" box on the Prompts page (model `claude-haiku-5-5`; override with `IDEAS_MODEL`).
+   - `STUDIO_PASSCODE` *(recommended)*: when set, uploads, edits, deletes and AI ideas need this passcode (people are asked once per browser). Viewing stays open.
 4. Redeploy. Also consider Vercel **Deployment Protection** (SSO) so only your team can open the site.
 
 Without Blob configured the Studio still works, saving cards in each person's own browser only.
 
 ## Run locally
 ```bash
-MOCK_GENERATE=1 node dev-server.js   # http://localhost:3000, data in ./.data, placeholder "generated" images
+MOCK_GENERATE=1 node dev-server.js   # http://localhost:3000, data in ./.data, canned AI ideas
 ```
 
 ## Notes
 - Cards use last-save-wins: if two people edit the same card at once, the later save replaces the earlier one.
-- Generation goes through `api/generate.js`. To use another image model, replace `callOpenAI` there.
+- The site only builds prompts. Images are made outside it (ChatGPT, Magnific) and then uploaded to the Studio, Bulk or the Library.
+- The AI idea box calls `api/ideas.js`. It is text only and is hidden unless `ANTHROPIC_API_KEY` is set.
 
 ## Bulk upload sheet format
 Paste from Excel/Sheets, upload `.xlsx` / `.csv`, or type one card per line (`kicker | headline | subline`).

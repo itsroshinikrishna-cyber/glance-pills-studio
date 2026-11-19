@@ -6,7 +6,6 @@ export default function handler(req, res) {
     storage: mode,
     ready: mode === "blob" || !process.env.VERCEL,
     passcodeRequired: !!process.env.STUDIO_PASSCODE,
-    generation: !!(process.env.OPENAI_API_KEY || process.env.MOCK_GENERATE),
-    mock: !process.env.OPENAI_API_KEY && !!process.env.MOCK_GENERATE,
+    ideas: !!(process.env.ANTHROPIC_API_KEY || process.env.MOCK_GENERATE),
   });
 }

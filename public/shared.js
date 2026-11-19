@@ -70,6 +70,14 @@ window.PS = (function () {
   .g p{margin:0;font-size:12px;line-height:1.5;color:#3c3846}
   .g .chips span{display:inline-block;background:#fdecea;color:#8a1f1c;padding:1px 6px;margin:0 4px 4px 0;font-size:11px}
   .g2{margin-top:6px}.g2>summary{cursor:pointer;font-size:12px;font-weight:600}
+  .gs{padding:14px 0;border-top:1px solid #e8e4f0}.gs:first-child{border-top:0;padding-top:0}
+  .gs h4{margin:0 0 8px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#6c6877}
+  .gs p{margin:0;font-size:13px;line-height:1.6;color:#3c3846}
+  .g-rules{list-style:none;margin:0;padding:0}
+  .g-rules li{position:relative;padding:0 0 7px 20px;font-size:13px;line-height:1.5;color:#3c3846}
+  .g-rules li::before{content:"✓";position:absolute;left:0;color:#6b3df0;font-weight:700}
+  .gs .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .gs .chips span{background:#fdecea;color:#8a1f1c;padding:2px 8px;font-size:12px}
   .mp{width:100%}
   .mp-q{width:100%;border:1px solid #dcd8e4;padding:6px;margin-bottom:6px;font:inherit;background:#fff}
   .mp-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:210px;overflow:auto;padding:2px}
@@ -86,7 +94,7 @@ window.PS = (function () {
   function nav(active) {
     const n = document.getElementById("nav"); if (!n) return;
     n.className = "ps-nav";
-    n.innerHTML = [["studio", "./", "Studio"], ["bulk", "bulk", "Bulk"], ["mascots", "mascots", "Mascots"], ["library", "library", "Library"], ["generate", "generate", "Generate"]]
+    n.innerHTML = [["studio", "./", "Studio"], ["bulk", "bulk", "Bulk"], ["mascots", "mascots", "Mascots"], ["library", "library", "Library"], ["generate", "generate", "Prompts"]]
       .map(([k, h, t]) => `<a href="${h}" class="${k === active ? "on" : ""}">${t}</a>`).join("");
   }
   let toastT;
@@ -189,6 +197,16 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
       blurb: "Tight, backlit macro crops of the moment a product is used. Premium and cinematic.",
       style: "Contre-jour backlit beauty photography: a thin crisp rim light from behind with a soft low-intensity fill, so skin texture, pores and fabric weave stay readable.",
       rules: ["One macro crop and one action per image", "One gradient colour per category: a soft glow behind the subject, falling to near-black at the edges", "Thin crisp rim light with a soft fill so skin texture stays readable", "Real, unretouched skin: never airbrushed or plastic", "Consistent 9:16 or 4:5 ratio"],
+      starters: [
+        { cat: "Skincare", name: "Serum drop on the cheekbone", values: { model: "a South Asian woman in her 20s with a sleek dark bun", crop: "from the bridge of the nose to the collarbone, face turned in profile", action: "pressing a single drop of serum onto her cheekbone with one fingertip", element: "the glistening drop of serum on her cheekbone", rim: "right", color: "#5b3a8c" } },
+        { cat: "Haircare", name: "Hand through glossy hair", values: { model: "a Black woman in her 30s with long, glossy, straight black hair", crop: "from behind the shoulder, only the hair and the back of the neck visible", action: "running one hand slowly through the length of her hair", element: "the glossy strands lit along their edges", rim: "left", color: "#8a5a1f" } },
+        { cat: "Grooming", name: "Razor down the jawline", values: { model: "a white European man in his 40s with short grey stubble", crop: "just below the eyes, only the cheek, jaw and neck visible", action: "drawing a safety razor down his jawline through a thin line of foam", element: "the razor's blade edge and the foam", rim: "right", color: "#1f4d3a" } },
+        { cat: "Makeup", name: "Lipstick on the lower lip", values: { model: "a Latina woman in her 20s with dark wavy hair", crop: "just below the nose, only the lips and chin visible", action: "pressing a lipstick bullet gently to her lower lip", element: "the glossy edge of the lipstick and her lower lip", rim: "left", color: "#6b1f2a" } },
+        { cat: "Fashion", name: "Wool collar turned up", values: { model: "an East Asian man in his 20s with short black hair", crop: "from the chin to the chest, face cropped out above the lips", action: "turning up the collar of a wool overcoat with one hand", element: "the weave of the wool catching the light", rim: "right", color: "#2a3a5c" } },
+        { cat: "Accessories", name: "Watch turned to the light", values: { model: "a Black man in his 30s with short hair", crop: "wrist and forearm only, cropped at the elbow", action: "turning his wrist toward the light", element: "the metal watch case and bracelet edges", rim: "left", color: "#1f5a5a" } },
+        { cat: "Fitness", name: "Chalk cloud", values: { model: "a mixed-race woman in her 30s with a high ponytail", crop: "hands and forearms only, cropped at the elbows", action: "clapping her hands together in a cloud of chalk dust", element: "the chalk dust drifting through the light", rim: "right", color: "#3a2a5c" } },
+        { cat: "Travel", name: "Sunglasses slide", values: { model: "a Middle Eastern man in his 30s with short dark hair and light stubble", crop: "from the nose to the chin, with the top edge of the sunglasses frame just in view", action: "sliding his sunglasses up his nose with one finger", element: "the frame edge and the reflection in the lens", rim: "left", color: "#1f4d6b" } },
+      ],
       lock: CONTREJOUR_STYLE,
       tips: {
         model: "Be specific, and vary casting across images: ethnicity, gender, age range, hair.",
@@ -222,6 +240,16 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
       blurb: "Full-face model caught mid-action with the product as a prop and one unexpected twist. Fun and human.",
       style: "Playful conceptual studio portrait: soft, bright, even softbox light so the whole face is clearly lit, on a solid saturated seamless backdrop, with a visible sense of humour.",
       rules: ["One full-face model, one prop, one twist per image", "One solid saturated backdrop colour per category (flat, no gradient)", "Soft, bright, even light: no harsh shadows or backlighting", "Real, unretouched skin and a genuine facial expression", "Consistent 9:16 or 4:5 ratio"],
+      starters: [
+        { cat: "Skincare", name: "Mask two sizes too small", values: { model: "a South Asian woman in her 20s with long black hair", expression: "calm and completely unimpressed", action: "holding up a sheet mask pack with two fingers", product: "a plain unbranded sheet mask pack", twist: "the sheet mask she is already wearing is two sizes too small and sits on just her nose", outfit: "a plain white robe", color: "#e0559a" } },
+        { cat: "Haircare", name: "Hairdryer grin", values: { model: "a Black man in his 30s with a short fade", expression: "stoic and perfectly composed", action: "holding a hairdryer at arm's length pointed at his own face", product: "a plain unbranded hairdryer", twist: "the wind from the dryer has pushed his cheeks back into a huge grin", outfit: "a plain grey t-shirt", color: "#f2b705" } },
+        { cat: "Grooming", name: "Bird in the beard", values: { model: "a white European man in his 40s with a thick red beard", expression: "dignified and extremely serious", action: "combing his beard with a tiny wooden comb", product: "a small unbranded wooden beard comb", twist: "a single small bird sits calmly in his beard", outfit: "a plain navy sweater", color: "#1f8a70" } },
+        { cat: "Makeup", name: "Lipstick moustache", values: { model: "a Latina woman in her 20s with a curly bob", expression: "innocent and delighted", action: "holding a lipstick up like a candle", product: "a plain red lipstick bullet", twist: "she has drawn a neat curled moustache on her upper lip with it", outfit: "a plain black turtleneck", color: "#e63946" } },
+        { cat: "Fashion", name: "Jacket swallowing him", values: { model: "an East Asian man in his 20s with messy black hair", expression: "wide-eyed and proud", action: "holding the lapels of his jacket open with both hands", product: "a plain oversized olive blazer", twist: "the blazer is so oversized that only his eyes and fingertips show", outfit: "a plain white shirt under the blazer", color: "#2d6a4f" } },
+        { cat: "Accessories", name: "Wrist full of watches", values: { model: "a Black woman in her 30s with a short natural afro", expression: "smug and thrilled", action: "holding one wrist up to the camera", product: "a plain unbranded wristwatch", twist: "her forearm is covered in a stack of identical watches up to the elbow", outfit: "a plain sleeveless cream top", color: "#3a86ff" } },
+        { cat: "Fitness", name: "Teacup dumbbell", values: { model: "a mixed-race man in his 30s with a shaved head", expression: "scrunched in a determined grimace", action: "lifting a small dumbbell with both hands", product: "a plain pink dumbbell", twist: "the dumbbell is as tiny as a teacup, but he strains as if it were enormous", outfit: "a plain orange tank top", color: "#7b2cbf" } },
+        { cat: "Travel", name: "Suitcase that won't shut", values: { model: "a South Asian man in his 30s with a trimmed beard", expression: "calmly smiling", action: "sitting on a suitcase to force it shut", product: "a plain unbranded hard-shell suitcase", twist: "the suitcase is bursting and a very long scarf spills out of it", outfit: "a plain blue shirt", color: "#ff7f11" } },
+      ],
       lock: PLAYFUL_STYLE,
       tips: {
         model: "Be specific, and vary casting across images: ethnicity, gender, age range, hair.",
@@ -266,6 +294,16 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
       blurb: "The product is the hero, shot on location in natural light. No face is ever shown. Clean and product-led.",
       style: "Natural-light hero product still life shot on location: soft directional daylight, a tonal palette, product in sharp focus. No face is ever shown.",
       rules: ["One hero product per image, shot on location in natural light", "No face, ever. A hand, wrist, clasped fingers or torso fragment is allowed", "Tonal palette: the surroundings sit in the same colour family as the product", "Real materials and textures; no studio or gradient backdrop, no logos or readable labels", "Consistent 9:16 or 4:5 ratio"],
+      starters: [
+        { cat: "Skincare", name: "Serum on a stone shelf", values: { product: "a frosted glass serum bottle with a matte white dropper", placement: "standing next to a folded linen towel", place: "on a pale stone bathroom shelf beside a frosted window", light: "soft morning daylight from the left", palette: "pale sage and warm white", human: "none", crop: "" } },
+        { cat: "Haircare", name: "Shampoo bottle in hand", values: { product: "a matte terracotta shampoo bottle", placement: "held by the neck in the hand of a mixed-race woman in her 30s", place: "in a quiet tiled bathroom", light: "soft overcast window light from the right", palette: "terracotta and sand", human: "hand only", crop: "the wrist" } },
+        { cat: "Grooming", name: "Beard balm tin", values: { product: "a round brushed-metal tin of beard balm, open", placement: "sitting with its lid beside it", place: "on a dark walnut dresser", light: "low warm window light from the left", palette: "walnut brown and brushed silver", human: "none", crop: "" } },
+        { cat: "Makeup", name: "Lipstick on silk", values: { product: "a matte black lipstick tube with a deep red bullet", placement: "lying on its side", place: "on a folded silk scarf", light: "soft window light from the upper right", palette: "deep red and black", human: "none", crop: "" } },
+        { cat: "Fashion", name: "Loafers in the sun", values: { product: "a pair of tan leather loafers", placement: "placed side by side", place: "on a sun-warmed wooden floor beside a linen curtain", light: "low golden-hour sun from behind right", palette: "tan and warm cream", human: "none", crop: "" } },
+        { cat: "Accessories", name: "Charm bracelet on a wrist", values: { product: "a silver chain bracelet with a small round charm", placement: "worn on the wrist of an East Asian woman in her 20s who rests her hand on a knit sweater", place: "in a plain indoor setting", light: "soft window light from the left", palette: "silver and dusty blue", human: "wrist and hand only", crop: "the forearm" } },
+        { cat: "Fitness", name: "Yoga mat in the corner", values: { product: "a rolled-up sage green yoga mat", placement: "leaning against a wall", place: "in an empty sunlit studio corner", light: "bright window light from the left", palette: "sage green and pale wood", human: "none", crop: "" } },
+        { cat: "Travel", name: "Passport holder on a sill", values: { product: "a compact beige canvas passport holder", placement: "lying open", place: "on a hotel windowsill with a softly blurred city behind", light: "soft morning daylight from the left", palette: "beige and stone grey", human: "none", crop: "" } },
+      ],
       lock: HERO_STYLE,
       tips: {
         product: "One product only: type, material and colour.",
@@ -391,6 +429,13 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
 
   /* Guidelines panel for a pill. The look / realism / never-include text is read from the same
      locked style block that goes into every prompt, so the two can never disagree. */
+  /* The "never include" list of a pill, read from its locked style block. */
+  function avoidList(key) {
+    const t = TREATMENTS[key]; if (!t) return [];
+    const p = String(t.lock || "").split("\n\n").find(x => x.startsWith("Avoid:"));
+    return p ? p.slice(6).trim().replace(/\.$/, "").split(", ").filter(Boolean) : [];
+  }
+
   function guideHTML(key, opts) {
     const t = TREATMENTS[key]; if (!t) return "";
     const rules = `<ul>${t.rules.map(r => `<li>${esc(r)}</li>`).join("")}</ul>`;
@@ -398,19 +443,17 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
     const parts = String(t.lock || "").split("\n\n");
     const get = h => { const p = parts.find(x => x.startsWith(h + ":")); return p ? p.slice(h.length + 1).trim() : ""; };
     const avoid = get("Avoid").replace(/\.$/, "").split(", ").filter(Boolean);
-    return `<b>How we use it</b>${rules}
-      <details class="g" open><summary>Full guidelines</summary>
-        <h4>The look</h4><p>${esc(get("Style"))}</p>
-        <h4>Keep it real</h4><p>${esc(get("Realism"))}</p>
-        <h4>Never include</h4><div class="chips">${avoid.map(a => `<span>${esc(a)}</span>`).join("")}</div>
-        <h4>Locked style block</h4><p>Added to the end of every prompt. It can't be changed from the fields.</p>
-        <details class="g2"><summary>Show the exact text</summary><pre class="lock">${esc(t.lock || "")}</pre></details>
-      </details>`;
+    return `<div class="gs"><h4>How we use it</h4><ul class="g-rules">${t.rules.map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
+      <div class="gs"><h4>The look</h4><p>${esc(get("Style"))}</p></div>
+      <div class="gs"><h4>Keep it real</h4><p>${esc(get("Realism"))}</p></div>
+      <div class="gs"><h4>Never include</h4><div class="chips">${avoid.map(a => `<span>${esc(a)}</span>`).join("")}</div></div>
+      <div class="gs"><h4>Locked style block</h4><p>Added to the end of every prompt. It can't be changed from the fields.</p>
+        <details class="g2"><summary>Show the exact text</summary><pre class="lock">${esc(t.lock || "")}</pre></details></div>`;
   }
 
   function offlineMsg(cfg) {
     return `<b>Shared storage isn't connected</b>${cfg && cfg.reason ? " (" + esc(cfg.reason) + ")" : ""}. Open <a href="api/health" target="_blank">api/health</a> to see what is missing. The setup steps are in DEPLOY.md.`;
   }
 
-  return { mascotPicker, loadMascots, guideHTML, offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
+  return { mascotPicker, loadMascots, avoidList, guideHTML, offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
 })();

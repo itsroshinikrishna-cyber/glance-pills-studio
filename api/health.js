@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     storage: mode,
     blobTokenPresent: !!process.env.BLOB_READ_WRITE_TOKEN,
     passcodeSet: !!process.env.STUDIO_PASSCODE,
-    openaiKeyPresent: !!process.env.OPENAI_API_KEY,
+    anthropicKeyPresent: !!process.env.ANTHROPIC_API_KEY,
     node: process.version,
     write: null,
     hint: "",

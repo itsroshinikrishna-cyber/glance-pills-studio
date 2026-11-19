@@ -1,5 +1,5 @@
 // Local dev server: serves public/, runs api/*.js, stores data in ./.data
-// Usage: node dev-server.js   (add MOCK_GENERATE=1 to test generation without a provider key)
+// Usage: node dev-server.js   (add MOCK_GENERATE=1 to test the idea helper without an API key)
 import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";

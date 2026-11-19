@@ -204,7 +204,7 @@
 
     <fieldset data-for="image9 image45">
       <legend>Need an image?</legend>
-      <a class="btn" id="genLink" href="generate" style="display:block;text-align:center;text-decoration:none">Generate one for this card →</a>
+      <a class="btn" id="genLink" href="generate" style="display:block;text-align:center;text-decoration:none">Write the image prompt for this card →</a>
     </fieldset>
   </aside>
 </main>
@@ -432,7 +432,7 @@ async function setImageFile(file){
 }
 $("#drop").onclick=()=>$("#file").click();
 $("#file").onchange=e=>{ setImageFile(e.target.files[0]); e.target.value=""; };
-$("#btnLibImg").onclick=async()=>{ const c=cur(); if(!c||c.type==="prompt") return; const it=await PS.pickAsset(["image","generated"],"Choose an image"); if(it) applyImage(c,it.url); };
+$("#btnLibImg").onclick=async()=>{ const c=cur(); if(!c||c.type==="prompt") return; const it=await PS.pickAsset(["image"],"Choose an image"); if(it) applyImage(c,it.url); };
 ["dragover","drop"].forEach(t=>document.addEventListener(t,e=>{ e.preventDefault(); if(t==="drop") setImageFile(e.dataTransfer.files[0]); }));
 document.addEventListener("paste",e=>{ const f=[...(e.clipboardData?.files||[])][0]; if(f) setImageFile(f); });
 

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-// Writes (and image generation) require the team passcode when STUDIO_PASSCODE is set.
+// Writes (and the idea helper) require the team passcode when STUDIO_PASSCODE is set.
 export function auth(req, res) {
   const need = process.env.STUDIO_PASSCODE;
   if (!need) return true;

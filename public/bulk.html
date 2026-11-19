@@ -215,7 +215,7 @@ $("#drop").onclick=()=>$("#file").click();
 $("#file").onchange=e=>{addFiles(e.target.files); e.target.value="";};
 ["dragover","dragleave","drop"].forEach(t=>$("#drop").addEventListener(t,e=>{e.preventDefault(); $("#drop").classList.toggle("over",t==="dragover"); if(t==="drop") addFiles(e.dataTransfer.files);}));
 $("#btnLib").onclick=async()=>{
-  const it=await PS.pickAsset(["image","generated"],"Add an image"); if(!it) return;
+  const it=await PS.pickAsset(["image"],"Add an image"); if(!it) return;
   if(!S.images.some(i=>i.src===it.url)){ S.images.push({id:CR.uid(),name:it.name||"image",src:it.url,url:it.url}); S.ov={}; renderThumbs(); update(); }
 };
 

@@ -3,98 +3,157 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Generate · Glance Pills Studio</title>
+<title>Prompts · Glance Pills Studio</title>
 <link rel="stylesheet" href="fonts.css">
 <style>
-  :root{--bg:#f4f3f6;--panel:#fff;--ink:#15131a;--muted:#6c6877;--line:#dcd8e4;--accent:#6b3df0}
+  :root{--bg:#f4f3f6;--panel:#fff;--ink:#15131a;--muted:#6c6877;--line:#e3dfeb;--accent:#6b3df0;--ok:#1c6b40;--warn:#9a5b00}
   *{box-sizing:border-box;border-radius:0!important}
   body{margin:0;font-family:"DM Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
   button,select,input,textarea{font:inherit;color:inherit}
-  header{display:flex;align-items:center;gap:16px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line);min-height:54px}
+  header{display:flex;align-items:center;gap:16px;padding:0 16px;background:var(--panel);border-bottom:1px solid #dcd8e4;min-height:54px}
   header h1{font-size:16px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin:0;padding:14px 0}
-  main{max-width:1200px;margin:0 auto;padding:20px 16px}
-  h2{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
-  .how{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);margin:0 0 18px;font-size:13px}
-  .how b{color:var(--ink)}
-  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
-  .tile{background:#fff;border:1px solid var(--line);padding:14px;text-align:left;cursor:pointer}
-  .tile:hover{border-color:var(--ink)}
-  .tile.on{border:2px solid var(--ink);padding:13px;background:#f7f5fb}
-  .tile .f{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-  .tile b{display:block;font-size:16px;margin:4px 0 6px;font-weight:900}
-  .tile span{color:var(--muted);font-size:13px;line-height:1.4}
-  .cols{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:22px;align-items:start}
-  .card{background:#fff;border:1px solid var(--line);padding:16px}
-  label{display:block;font-size:12px;font-weight:600;margin:12px 0 4px}
-  label:first-child{margin-top:0}
-  input[type=text],select,textarea{width:100%;border:1px solid var(--line);background:#fff;padding:8px}
-  textarea{resize:vertical;line-height:1.45}
-  input[type=color]{width:46px;height:32px;padding:0;border:1px solid var(--line);background:#fff}
-  .row{display:flex;gap:10px}.row>div{flex:1}
-  .seg{display:flex}.seg button{flex:1;border:1px solid var(--line);background:#fff;padding:7px 4px;font-weight:600;font-size:12px;margin-left:-1px;cursor:pointer}
-  .seg button:first-child{margin-left:0}.seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .btn{border:1px solid var(--ink);background:#fff;padding:8px 12px;font-weight:600;cursor:pointer}
-  .btn:hover{background:#eee}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:#5a2fd6}
-  .btn.primary:disabled{opacity:.5;cursor:default}.btn.small{padding:4px 8px;font-size:12px}
-  .refs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .refs .r{position:relative;width:54px;height:72px;border:1px solid var(--line)}
-  .refs img{width:100%;height:100%;object-fit:cover;display:block}
-  .refs .r button{position:absolute;top:0;right:0;border:0;background:#15131a;color:#fff;width:18px;height:18px;line-height:16px;padding:0;cursor:pointer}
-  .rules{background:#f7f5fb;border:1px solid var(--line);padding:8px 10px;font-size:12px;line-height:1.5;color:#3c3846;margin-bottom:12px}
-  .rules ul{margin:4px 0 0;padding-left:16px}
-  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  main{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+  .steps{display:flex;gap:22px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:0 0 16px}
+  .steps b{color:var(--ink)}
   .note{background:#fff7e0;border:1px solid #ecd58a;padding:10px 12px;margin-bottom:14px;font-size:13px}
-  .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
-  .res{background:#fff;border:1px solid var(--line)}
-  .res .t{aspect-ratio:2/3;background:#e9e6f0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:10px;overflow:hidden}
-  .res .t img{width:100%;height:100%;object-fit:cover;display:block}
-  .res .a{display:flex;gap:6px;padding:8px;flex-wrap:wrap}
-  .empty{color:var(--muted);background:#fff;border:1px dashed var(--line);padding:50px 20px;text-align:center}
-  @media (max-width:900px){.tiles{grid-template-columns:1fr}.cols{grid-template-columns:1fr}}
+
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .tile{background:var(--panel);border:1px solid var(--line);padding:12px 14px;text-align:left;cursor:pointer;display:block}
+  .tile:hover{border-color:var(--ink)}
+  .tile.on{border:2px solid var(--ink);padding:11px 13px;background:#f7f5fb}
+  .tile .f{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+  .tile b{display:block;font-size:15px;margin:3px 0 4px;font-weight:900}
+  .tile span{color:var(--muted);font-size:12.5px;line-height:1.4;display:block}
+
+  .work{display:grid;grid-template-columns:minmax(340px,450px) minmax(0,1fr);gap:20px;align-items:start}
+  .panel{background:var(--panel);border:1px solid var(--line)}
+  .pad{padding:16px}
+
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;border:0;background:var(--panel);padding:13px 8px;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+
+  /* idea helper */
+  .idea{background:#f7f5fb;border:1px solid var(--line);padding:12px;margin-bottom:18px}
+  .idea-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .idea-h b{font-size:13px}
+  .idea-row{display:flex;gap:8px}
+  .idea-row select{flex:1}
+  .chips2{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .exline{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .exline>span{font-size:12px;color:var(--muted)}
+  .ai{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .ai label{font-size:12.5px;font-weight:700;display:block;margin-bottom:6px}
+  .tag{font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 6px;margin-left:4px;letter-spacing:.05em}
+  .ai-card{background:#fff;border:1px solid var(--line);padding:10px;margin-top:8px}
+  .ai-card b{display:block;margin-bottom:3px}
+  .ai-card p{margin:0 0 8px;font-size:12px;color:var(--muted);line-height:1.45}
+
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:12.5px;font-weight:700;margin:0 0 2px}
+  .hint{font-size:12px;color:var(--muted);line-height:1.4}
+  .fld .hint{margin:0 0 6px}
+  input[type=text],select,textarea{width:100%;border:1px solid #d6d1e0;background:#fff;padding:9px 10px}
+  input[type=text]:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  textarea{resize:vertical;line-height:1.5}
+  input[type=color]{width:52px;height:34px;padding:0;border:1px solid #d6d1e0;background:#fff;cursor:pointer}
+  .more{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+  .more>summary{cursor:pointer;font-weight:700;font-size:12.5px;color:var(--muted)}
+  .more>summary:hover{color:var(--ink)}
+  .more .body{margin-top:14px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .seg{display:flex}.seg button{flex:1;border:1px solid #d6d1e0;background:#fff;padding:8px 4px;font-weight:600;font-size:12px;margin-left:-1px;cursor:pointer}
+  .seg button:first-child{margin-left:0}.seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .btn{border:1px solid var(--ink);background:#fff;padding:8px 12px;font-weight:600;cursor:pointer;display:inline-block;text-decoration:none;color:var(--ink);font-size:14px}
+  .btn:hover{background:#eee}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:#5a2fd6}
+  .btn.primary:disabled{opacity:.5;cursor:default}.btn.small{padding:5px 9px;font-size:12px}
+
+  /* prompt */
+  .ph{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .ph b{font-size:13px}
+  .chip{font-size:11px;font-weight:600;background:#e6f4ec;color:var(--ok);padding:2px 8px}
+  .bar2{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .bar2 .sp{flex:1}
+  .state{margin-top:10px;font-size:12.5px;line-height:1.45}
+  .state.ok{color:var(--ok)}.state.warn{color:var(--warn)}
+  .next{margin-top:20px}
+  .next h3{margin:0 0 10px;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .next ol{margin:0;padding-left:20px;line-height:1.7}
+  .next li{padding-left:2px}
+  .next .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  @media (max-width:900px){.tiles{grid-template-columns:1fr}.work{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header><h1>Glance Pills Studio</h1><nav id="nav"></nav></header>
 <main>
-  <div class="how"><span><b>1.</b> Pick a pill</span><span><b>2.</b> Fill in its focus</span><span><b>3.</b> Review the prompt</span><span><b>4.</b> Generate, then send the image to the Studio</span></div>
+  <div class="steps"><span><b>1</b> Pick a pill</span><span><b>2</b> Pick an idea or fill in the fields</span><span><b>3</b> Copy the prompt</span><span><b>4</b> Paste it into ChatGPT or Magnific to make the image</span></div>
   <div id="note"></div>
-  <h2>Pick a pill</h2>
   <div class="tiles" id="tiles"></div>
 
-  <div class="cols">
-    <div class="card">
-      <div class="rules" id="rules"></div>
-      <div id="exBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
-      <div id="fields"></div>
-      <div class="row" style="margin-top:12px">
-        <div><label>Segment</label>
-          <select id="segment"><option value="female">Female</option><option value="male">Male</option><option value="neutral">Neutral</option></select></div>
-        <div><label>Category</label><input type="text" id="category" list="cats" placeholder="Skincare"></div>
+  <div class="work">
+    <div class="panel">
+      <div class="tabs"><button class="on" data-tab="fill">Fill in</button><button data-tab="guide">Guidelines</button></div>
+
+      <div class="pad" id="tab-fill">
+        <div class="idea">
+          <div class="idea-h"><b>Need an idea?</b><span class="hint">Pick a category for ready-made starters.</span></div>
+          <div class="idea-row"><select id="ideaCat"></select><button class="btn small" id="shuffle">Surprise me</button></div>
+          <div class="chips2" id="ideaList"></div>
+          <div class="exline" id="exWrap"><span>Your own examples:</span><span id="exBtns" style="display:contents"></span></div>
+          <div class="ai" id="aiBox" hidden>
+            <label>Or describe your product and get 3 ideas <span class="tag">AI</span></label>
+            <textarea id="aiBrief" rows="2" placeholder="e.g. an overnight hydrating cream for dry skin, for women in their 30s"></textarea>
+            <div style="margin-top:8px"><button class="btn small primary" id="aiGo">Suggest 3 ideas</button></div>
+            <div id="aiOut"></div>
+          </div>
+        </div>
+
+        <div id="fields"></div>
+        <details class="more">
+          <summary>More options</summary>
+          <div class="body">
+            <div class="two">
+              <div class="fld"><label>Segment</label>
+                <select id="segment"><option value="female">Female</option><option value="male">Male</option><option value="neutral">Neutral</option></select></div>
+              <div class="fld"><label>Category</label><input type="text" id="category" list="cats" placeholder="Skincare"></div>
+            </div>
+            <datalist id="cats"><option>Grooming</option><option>Skincare</option><option>Haircare</option><option>Makeup</option><option>Fashion</option><option>Accessories</option><option>Fitness</option><option>Travel</option><option>Gifts</option><option>Tech</option><option>Pets</option><option>Home decor</option></datalist>
+            <div class="fld"><label>Card format <span style="font-weight:400;color:var(--muted)">(sets the ratio to use in your image tool)</span></label>
+              <div class="seg" id="ratio"><button data-v="image9" class="on">9:16</button><button data-v="image45">4:5</button></div></div>
+          </div>
+        </details>
       </div>
-      <datalist id="cats"><option>Grooming</option><option>Skincare</option><option>Haircare</option><option>Makeup</option><option>Fashion</option><option>Accessories</option><option>Fitness</option><option>Travel</option><option>Gifts</option><option>Tech</option><option>Pets</option><option>Home decor</option></datalist>
-      <label>Format</label>
-      <div class="seg" id="ratio"><button data-v="image9" class="on">9:16</button><button data-v="image45">4:5</button></div>
-      <label>Style reference <span style="font-weight:400;color:var(--muted)">(optional, up to 3)</span></label>
-      <div class="refs" id="refs"></div>
-      <div class="hint">References steer the look. Only use images you own or are licensed to use.</div>
+
+      <div class="pad" id="tab-guide" hidden>
+        <div id="rules"></div>
+      </div>
     </div>
 
     <div>
-      <div class="card" style="margin-bottom:18px">
-        <label>Prompt <span style="font-weight:400;color:var(--muted)">(built from the strategy; edit it if you need to)</span></label>
-        <textarea id="prompt" rows="9"></textarea>
-        <div class="row" style="margin-top:10px;align-items:center">
-          <div style="flex:none;width:130px"><select id="n"><option value="1">1 image</option><option value="2">2 images</option><option value="3">3 images</option><option value="4">4 images</option></select></div>
-          <div style="flex:1;display:flex;gap:8px;justify-content:flex-end">
-            <button class="btn small" id="reset" hidden>Reset prompt</button>
-            <button class="btn small" id="copy">Copy prompt</button>
-            <button class="btn primary" id="go">Generate</button>
-          </div>
+      <div class="panel pad">
+        <div class="ph"><b>Your prompt</b><span class="chip">Locked style block included</span></div>
+        <textarea id="prompt" rows="14"></textarea>
+        <div class="state" id="state"></div>
+        <div class="bar2">
+          <button class="btn primary" id="copy">Copy prompt</button>
+          <button class="btn" id="copyGpt" title="Adds a short instruction and the ratio, ready for ChatGPT">Copy for ChatGPT</button>
+          <span class="sp"></span>
+          <button class="btn small" id="reset" hidden>Reset prompt</button>
         </div>
-        <div class="hint" id="status"></div>
       </div>
-      <h2>Results</h2>
-      <div class="results" id="results"><div class="empty" style="grid-column:1/-1">Generated images appear here and are saved to the Library.</div></div>
+
+      <div class="panel pad next">
+        <h3>What next</h3>
+        <ol>
+          <li>Paste the prompt into <b>ChatGPT</b> or <b>Magnific</b> and generate.</li>
+          <li>Set the image ratio to <b id="ratioTxt">9:16</b> in that tool.</li>
+          <li>Pick the best result, then add it to the Studio.</li>
+        </ol>
+        <div class="acts"><a class="btn primary" id="toStudio" href="./">Make a card in the Studio</a><a class="btn" href="bulk">Make many cards (Bulk)</a><a class="btn" href="library">Upload to the Library</a></div>
+      </div>
     </div>
   </div>
 </main>
@@ -106,76 +165,104 @@ const params=new URLSearchParams(location.search);
 let treatment=PS.TREATMENTS[params.get("treatment")]?params.get("treatment"):"contrejour";
 const vals={}; for(const k in PS.TREATMENTS) vals[k]=PS.defaults(k);
 const common={segment:["female","male","neutral"].includes(params.get("segment"))?params.get("segment"):"neutral",category:params.get("category")||"",ratio:"image9"};
-let refs=[], dirty=false, cfg={};
+let dirty=false, cfg={}, lastIdea=null;
 
 function renderTiles(){
   $("#tiles").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<button class="tile ${k===treatment?"on":""}" data-k="${k}"><div class="f">${esc(t.focus)}</div><b>${esc(t.name)}</b><span>${esc(t.blurb)}</span></button>`).join("");
 }
-const tipHtml=f=>{ const tip=(PS.TREATMENTS[treatment].tips||{})[f.k]; return tip?`<div class="hint" style="margin:-2px 0 4px">${esc(tip)}</div>`:""; };
+const tipHtml=f=>{ const tip=(PS.TREATMENTS[treatment].tips||{})[f.k]; return tip?`<div class="hint">${esc(tip)}</div>`:""; };
 function renderForm(){
   const t=PS.TREATMENTS[treatment];
-  $("#exBtns").innerHTML=(t.examples||[]).map((x,i)=>`<button class="btn small" data-ex="${i}">Load example: ${esc(x.name)}</button>`).join("");
+  $("#exWrap").hidden=!(t.examples||[]).length;
+  $("#exBtns").innerHTML=(t.examples||[]).map((x,i)=>`<button class="btn small" data-ex="${i}">${esc(x.name)}</button>`).join("");
   $("#rules").innerHTML=PS.guideHTML(treatment);
   $("#fields").innerHTML=t.fields.map(f=>{
-    const v=esc(vals[treatment][f.k]??"");
-    if(f.type==="select") return `<label>${esc(f.label)}</label>${tipHtml(f)}<select data-f="${f.k}">${f.opts.map(o=>`<option ${o===vals[treatment][f.k]?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
-    if(f.type==="color") return `<label>${esc(f.label)}</label>${tipHtml(f)}<input type="color" data-f="${f.k}" value="${v}">`;
-    return `<label>${esc(f.label)}</label>${tipHtml(f)}<input type="text" data-f="${f.k}" value="${v}" placeholder="${esc(f.ph||"")}">`;
+    const v=esc(vals[treatment][f.k]??""); let control;
+    if(f.type==="select") control=`<select data-f="${f.k}">${f.opts.map(o=>`<option ${o===vals[treatment][f.k]?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+    else if(f.type==="color") control=`<input type="color" data-f="${f.k}" value="${v}">`;
+    else control=`<input type="text" data-f="${f.k}" value="${v}" placeholder="${esc(f.ph||"")}">`;
+    return `<div class="fld"><label>${esc(f.label)}</label>${tipHtml(f)}${control}</div>`;
   }).join("");
   $("#segment").value=common.segment; $("#category").value=common.category;
   $("#ratio").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===common.ratio));
 }
-function renderRefs(){
-  $("#refs").innerHTML=refs.map((r,i)=>`<div class="r"><img src="${esc(r.url)}" alt=""><button data-i="${i}" title="Remove">×</button></div>`).join("")+(refs.length<3?'<button class="btn small" id="addRef">+ From library</button>':"");
-}
-function rebuild(force){ if(dirty&&!force) return; $("#prompt").value=PS.buildPrompt(treatment,vals[treatment],common); dirty=false; $("#reset").hidden=true; }
 
-$("#exBtns").onclick=e=>{ const b=e.target.closest("[data-ex]"); if(!b) return; vals[treatment]=Object.assign(PS.defaults(treatment),PS.TREATMENTS[treatment].examples[+b.dataset.ex].values); dirty=false; renderForm(); rebuild(true); };
-$("#tiles").onclick=e=>{const b=e.target.closest(".tile"); if(!b) return; treatment=b.dataset.k; dirty=false; renderTiles(); renderForm(); rebuild(true);};
+/* ---------- Ideas ---------- */
+const starters=()=>PS.TREATMENTS[treatment].starters||[];
+function renderIdeas(){
+  const cats=[...new Set(starters().map(s=>s.cat))], cur=$("#ideaCat").value;
+  $("#ideaCat").innerHTML='<option value="">Any category</option>'+cats.map(c=>`<option ${c===cur?"selected":""}>${esc(c)}</option>`).join("");
+  drawIdeaList();
+}
+const pool=()=>{ const c=$("#ideaCat").value; return starters().filter(s=>!c||s.cat===c); };
+function drawIdeaList(){ $("#ideaList").innerHTML=pool().map(s=>`<button class="btn small" data-si="${starters().indexOf(s)}" title="${esc(s.cat)}">${esc(s.name)}</button>`).join(""); }
+function applyIdea(name,values,cat){
+  vals[treatment]=Object.assign(PS.defaults(treatment),cleanValues(values)); if(cat) common.category=cat;
+  dirty=false; renderForm(); rebuild(true); PS.toast(`Loaded “${name}”`);
+}
+function cleanValues(v){   // keep only this pill's fields, in the right shape
+  const out={}; for(const f of PS.TREATMENTS[treatment].fields){ let x=String((v||{})[f.k]??"").slice(0,400);
+    if(f.type==="color"&&!/^#[0-9a-fA-F]{6}$/.test(x)) x=f.def||"#1f7a7a";
+    if(f.type==="select"&&!f.opts.includes(x)) x=f.opts[0]; out[f.k]=x; } return out;
+}
+$("#ideaCat").onchange=drawIdeaList;
+$("#ideaList").onclick=e=>{ const b=e.target.closest("[data-si]"); if(!b) return; const s=starters()[+b.dataset.si]; lastIdea=s; applyIdea(s.name,s.values,s.cat); };
+$("#shuffle").onclick=()=>{ const p=pool(); if(!p.length) return; let s; do{ s=p[Math.floor(Math.random()*p.length)]; }while(p.length>1&&s===lastIdea); lastIdea=s; applyIdea(s.name,s.values,s.cat); };
+
+$("#aiGo").onclick=async()=>{
+  const brief=$("#aiBrief").value.trim(); if(brief.length<5) return PS.toast("Describe the product first");
+  const t=PS.TREATMENTS[treatment], btn=$("#aiGo"); btn.disabled=true; btn.textContent="Thinking…"; $("#aiOut").innerHTML="";
+  try{
+    const r=await PS.api("/api/ideas",{method:"POST",body:{treatment,brief,category:common.category||$("#ideaCat").value,
+      fields:t.fields.map(f=>({k:f.k,label:f.label,tip:(t.tips||{})[f.k]||"",type:f.type||"text",opts:f.opts})),rules:t.rules,avoid:PS.avoidList(treatment)}});
+    window._ai=r.ideas||[];
+    $("#aiOut").innerHTML=window._ai.map((x,i)=>{ const f=t.fields.filter(f=>f.type!=="color"&&f.type!=="select").slice(0,3).map(f=>x.values[f.k]).filter(Boolean).join(" · ");
+      return `<div class="ai-card"><b>${esc(x.name)}</b><p>${esc(f)}</p><button class="btn small primary" data-ai="${i}">Use this idea</button></div>`; }).join("")||'<div class="hint" style="margin-top:8px">No ideas came back. Try describing the product a bit differently.</div>';
+  }catch(e){ $("#aiOut").innerHTML=`<div class="hint" style="margin-top:8px;color:#9a1c18">${esc(e.message)}</div>`; }
+  btn.disabled=false; btn.textContent="Suggest 3 ideas";
+};
+$("#aiOut").onclick=e=>{ const b=e.target.closest("[data-ai]"); if(!b) return; const x=window._ai[+b.dataset.ai]; applyIdea(x.name,x.values); };
+
+/* ---------- Prompt ---------- */
+function slots(text){ return [...new Set([...text.matchAll(/\[([A-Z][A-Z ]+?)(?::[^\]]*)?\]/g)].map(m=>m[1].trim()))]; }
+function updateState(){
+  const text=$("#prompt").value, missing=slots(text), st=$("#state");
+  if(missing.length){ st.className="state warn"; st.textContent=`Still to fill in: ${missing.join(", ").toLowerCase()}. They show in [brackets] in the prompt.`; }
+  else if(text.trim().length<20){ st.className="state warn"; st.textContent="The prompt is empty."; }
+  else { st.className="state ok"; st.textContent="Ready to copy. Nothing is missing."; }
+  const r=common.ratio==="image9"?"9:16":"4:5"; $("#ratioTxt").textContent=r;
+  $("#toStudio").href="./?"+new URLSearchParams({new:common.ratio,treatment,segment:common.segment,category:common.category});
+}
+function rebuild(force){ if(dirty&&!force) return; $("#prompt").value=PS.buildPrompt(treatment,vals[treatment],common); dirty=false; $("#reset").hidden=true; updateState(); }
+async function copy(text,msg){
+  if(slots($("#prompt").value).length) PS.toast("Some fields are still empty (shown in [brackets])");
+  try{ await navigator.clipboard.writeText(text); PS.toast(msg); }catch(e){ const t=$("#prompt"); t.select(); document.execCommand("copy"); PS.toast(msg); }
+}
+$("#copy").onclick=()=>copy($("#prompt").value,"Prompt copied. Paste it into ChatGPT or Magnific.");
+$("#copyGpt").onclick=()=>{
+  const ratio=common.ratio==="image9"?"vertical 9:16 portrait":"vertical 4:5 portrait";
+  copy(`Generate an image from this description. Make it a ${ratio} image.\n\n${$("#prompt").value}`,"Copied for ChatGPT. Paste it into a new chat.");
+};
+
+document.querySelector(".tabs").onclick=e=>{
+  const b=e.target.closest("button[data-tab]"); if(!b) return;
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  $("#tab-fill").hidden=b.dataset.tab!=="fill"; $("#tab-guide").hidden=b.dataset.tab!=="guide";
+};
+$("#exBtns").onclick=e=>{ const b=e.target.closest("[data-ex]"); if(!b) return; const x=PS.TREATMENTS[treatment].examples[+b.dataset.ex]; applyIdea(x.name,x.values); };
+$("#tiles").onclick=e=>{const b=e.target.closest(".tile"); if(!b) return; treatment=b.dataset.k; dirty=false; lastIdea=null; renderTiles(); renderForm(); renderIdeas(); rebuild(true);};
 $("#fields").addEventListener("input",e=>{const f=e.target.dataset.f; if(!f) return; vals[treatment][f]=e.target.value; rebuild();});
 $("#segment").onchange=e=>{common.segment=e.target.value; rebuild();};
 $("#category").oninput=e=>{common.category=e.target.value; rebuild();};
-$("#ratio").onclick=e=>{const b=e.target.closest("button"); if(!b) return; common.ratio=b.dataset.v; $("#ratio").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); rebuild();};
-$("#prompt").oninput=()=>{dirty=true; $("#reset").hidden=false;};
+$("#ratio").onclick=e=>{const b=e.target.closest("button"); if(!b) return; common.ratio=b.dataset.v; $("#ratio").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); rebuild(); updateState();};
+$("#prompt").oninput=()=>{dirty=true; $("#reset").hidden=false; updateState();};
 $("#reset").onclick=()=>rebuild(true);
-$("#copy").onclick=async()=>{try{await navigator.clipboard.writeText($("#prompt").value); PS.toast("Prompt copied");}catch(e){$("#prompt").select(); document.execCommand("copy");}};
-$("#refs").onclick=async e=>{
-  if(e.target.id==="addRef"){ const it=await PS.pickAsset(["image","generated"],"Choose a style reference"); if(it&&!refs.some(r=>r.url===it.url)){refs.push(it); renderRefs();} }
-  const x=e.target.closest("[data-i]"); if(x){refs.splice(+x.dataset.i,1); renderRefs();}
-};
-
-function studioLink(url){ return "./?"+new URLSearchParams({new:common.ratio,img:url,treatment,segment:common.segment,category:common.category}); }
-$("#go").onclick=async()=>{
-  const prompt=$("#prompt").value.trim(), n=+$("#n").value, box=$("#results");
-  if(prompt.length<10) return PS.toast("Add a prompt first");
-  if(/\[[^\]]+\]/.test(prompt)) return PS.toast("Fill in the empty fields first (shown in [brackets])");
-  if(box.querySelector(".empty")) box.innerHTML="";
-  $("#go").disabled=true; $("#status").textContent=`Generating ${n} image${n>1?"s":""}… this can take up to a minute.`;
-  const label=[treatment,common.category].filter(Boolean).join("-");
-  const slots=Array.from({length:n},()=>{const d=document.createElement("div"); d.className="res"; d.innerHTML='<div class="t">Generating…</div>'; box.prepend(d); return d;});
-  const refUrls=refs.filter(r=>!r.offline).map(r=>r.url);
-  const out=await Promise.allSettled(slots.map(()=>PS.api("/api/generate",{method:"POST",body:{treatment,prompt,refs:refUrls,label}})));
-  let fails=0, lastErr="";
-  out.forEach((r,i)=>{
-    const d=slots[i];
-    if(r.status==="fulfilled"){
-      const it=r.value; d.innerHTML=`<div class="t"><img src="${esc(it.url)}" alt=""></div><div class="a"></div>`;
-      const a=d.querySelector(".a");
-      const link=document.createElement("a"); link.className="btn small primary"; link.href=studioLink(it.url); link.textContent="Use in Studio"; link.style.textDecoration="none"; a.appendChild(link);
-      const open=document.createElement("a"); open.className="btn small"; open.href=it.url; open.target="_blank"; open.rel="noopener"; open.textContent="Open"; open.style.cssText="text-decoration:none;color:inherit"; a.appendChild(open);
-    } else { fails++; lastErr=r.reason.message; d.innerHTML=`<div class="t">${esc(r.reason.message)}</div>`; }
-  });
-  $("#go").disabled=false;
-  $("#status").textContent = fails? `${fails} of ${n} failed: ${lastErr}` : "Saved to the Library under Generated.";
-};
 
 (async()=>{
   cfg=await PS.config();
-  if(cfg.offline) $("#note").innerHTML='<div class="note">'+PS.offlineMsg(cfg)+' Images can\'t be generated or saved until then. You can still build and copy prompts.</div>', $("#go").disabled=true;
-  else if(!cfg.generation) $("#note").innerHTML='<div class="note"><b>Image generation isn\'t switched on yet.</b> Ask the admin to set <code>OPENAI_API_KEY</code> in Vercel. You can still build and copy prompts.</div>', $("#go").disabled=true;
-  else if(cfg.mock) $("#note").innerHTML='<div class="note">Mock mode: placeholder images only.</div>';
+  $("#aiBox").hidden=!cfg.ideas;
 })();
-renderTiles(); renderForm(); renderRefs(); rebuild(true);
+renderTiles(); renderForm(); renderIdeas(); rebuild(true);
 </script>
 </body>
 </html>
