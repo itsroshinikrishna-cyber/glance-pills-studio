@@ -125,6 +125,7 @@
       <div data-img><label>Copy hierarchy</label><select id="o-split"><option value="auto">Auto: split one line into small line, headline and subline</option><option value="columns">Use my columns exactly as written</option></select></div>
       <div data-img><label>Match images to copy by</label><div class="seg" id="o-match"><button data-v="order" class="on">Order</button><button data-v="filename">File name</button></div></div>
       <div data-prompt hidden><label>Card colour</label><select id="o-palette"><option value="rotate">Rotate the 4 brand colours</option><option value="purple">Purple</option><option value="pink">Pink</option><option value="blue">Blue</option><option value="yellow">Yellow</option></select></div>
+      <div data-prompt hidden><label>Mascot size</label><input type="range" id="o-mascotSize" min="16" max="80" value="30" style="width:100%"></div>
     </div>
     <div class="hint" data-img>Order: the 1st image goes with the 1st line, and so on. File name: put the image's file name in an <code>image</code> column. Each image's gradient is picked from the image itself; you can change it per card below.</div>
   </div>
@@ -150,7 +151,7 @@
 "use strict";
 PS.nav("bulk");
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)], esc=PS.esc;
-const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55}, ov:{}, pairs:[] };
+const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55,mascotSize:30}, ov:{}, pairs:[] };
 const BRAND=["purple","pink","blue","yellow"], MAX_WORDS=7;
 $("#o-treatment").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<option value="${k}">${esc(t.name)}</option>`).join("");
 
@@ -246,6 +247,7 @@ bindSeg("#o-type","type"); bindSeg("#o-align","align"); bindSeg("#o-match","matc
 for(const [id,k] of [["#o-segment","segment"],["#o-treatment","treatment"],["#o-grad","grad"],["#o-palette","palette"],["#o-split","split"]]) $(id).onchange=e=>{S.opts[k]=e.target.value; update();};
 $("#o-category").oninput=e=>{S.opts.category=e.target.value; update();};
 $("#o-scrimH").oninput=e=>{S.opts.scrimH=+e.target.value; update();};
+$("#o-mascotSize").oninput=e=>{S.opts.mascotSize=+e.target.value; update();};
 $("#copy").oninput=()=>update();
 
 /* ---------- Pairing + cards ---------- */
@@ -276,6 +278,7 @@ function makeCard(p,i){
     c.question=r.question||r.headline||""; c.subtext=r.subtext||r.sub||"";
     c.palette=normPal(r.palette)||(o.palette==="rotate"?BRAND[i%4]:o.palette);
     if(ov.question!==undefined) c.question=ov.question; if(ov.subtext!==undefined) c.subtext=ov.subtext; if(ov.palette) c.palette=ov.palette;
+    c.mascotSize=ov.mascotSize!==undefined?ov.mascotSize:o.mascotSize;
   } else {
     c.treatment=normTreat(r.treatment)||o.treatment; c.kicker=r.kicker||""; c.headline=r.headline||""; c.sub=r.sub||"";
     // One full line in the headline column: the tool sets the hierarchy. Explicit kicker/sub columns or manual line breaks win.
@@ -341,7 +344,7 @@ function setBar(){ const n=included().length; $("#create").disabled=!n; $("#barI
 
 /* ---------- Card editor (tap a card) ---------- */
 let EI=-1, EDSC=2;
-const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette"];
+const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette","mascotSize"];
 const edOv=()=>(S.ov[EI]=S.ov[EI]||{});
 const edCard=()=>makeCard(S.pairs[EI],EI);
 function openEditor(i){ EI=i; $("#ed").hidden=false; buildEditor(); }
@@ -353,6 +356,7 @@ function buildEditor(){
   ctl.innerHTML=isP?`
     <label>Question</label><textarea data-f="question" rows="3"></textarea>
     <label>Category subtext (optional)</label><input type="text" data-f="subtext">
+    <label>Mascot size</label><input type="range" data-f="mascotSize" min="16" max="80" step="1">
     <label>Colour</label><div class="seg" id="edPal">${BRAND.map(p=>`<button data-p="${p}">${p[0].toUpperCase()+p.slice(1)}</button>`).join("")}</div>`
   :`
     <label>Small line above (optional)</label><input type="text" data-f="kicker">

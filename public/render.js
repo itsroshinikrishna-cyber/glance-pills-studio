@@ -16,7 +16,7 @@ function blank(type){
   return { id:uid(), type, segment:"neutral", category:"", treatment:"contrejour",
     kicker:"", headline:"", sub:"", align:"left", img:null, zoom:1, ox:0, oy:0,
     scrimSource:"sugg1", scrimColor:"#20483a", scrimH:55,
-    question:"", subtext:"", palette:"purple", mascot:"", createdAt:Date.now() };
+    question:"", subtext:"", palette:"purple", mascot:"", mascotSize:30, createdAt:Date.now() };
 }
 
 /* ---------- Image cache ---------- */
@@ -123,12 +123,15 @@ function drawPrompt(ctx,c,W,H){
   const p=PALETTES[c.palette]||PALETTES.purple;
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,p.from); g.addColorStop(1,p.to);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  const mh=30, m=c.mascot?getImg(c.mascot):null;
+  const mh=Math.max(12,Math.min(90,+c.mascotSize||30)), m=c.mascot?getImg(c.mascot):null;
   if(m) ctx.drawImage(m,14,14,mh*m.width/m.height,mh); else drawMascotDefault(ctx,14,14,mh);
   ctx.fillStyle="#14121a"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-  setFont(ctx,400,15,-.1);
-  const lines=wrap(ctx,c.question||"",W-28); let y=70;
-  for(const l of lines){ ctx.fillText(l,14,y); y+=17.5; }
+  // The question sits below the mascot. A bigger mascot pushes it down, and the text shrinks a little if it would run off the card.
+  const top=14+mh+26, bottom=H-(c.subtext?24:14);
+  let size=15, lines;
+  for(;;){ setFont(ctx,400,size,-.1); lines=wrap(ctx,c.question||"",W-28); if(size<=10||top+(lines.length-1)*size*1.167<=bottom) break; size-=.5; }
+  const lh=size*1.167; let y=top;
+  for(const l of lines){ ctx.fillText(l,14,y); y+=lh; }
   if(c.subtext){ setFont(ctx,600,6.5,.4); ctx.fillStyle="rgba(20,18,26,.6)"; ctx.fillText(c.subtext.toUpperCase(),14,H-12); if("letterSpacing" in ctx) ctx.letterSpacing="0px"; }
 }
 function render(c,canvas,scale){

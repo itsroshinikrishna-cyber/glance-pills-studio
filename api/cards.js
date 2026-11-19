@@ -26,6 +26,7 @@ export function sanitize(c) {
     question: str(c.question, 200), subtext: str(c.subtext, 40),
     palette: oneOf(c.palette, ["purple", "pink", "blue", "yellow"], "purple"),
     mascot: url(c.mascot),
+    mascotSize: num(c.mascotSize, 12, 90, 30),
     createdAt: num(c.createdAt, 0, 9e15, Date.now()),
   };
 }
