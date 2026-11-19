@@ -64,7 +64,7 @@
   <div class="cols">
     <div class="card">
       <div class="rules" id="rules"></div>
-      <button class="btn small" id="loadEx" hidden style="margin-bottom:10px">Load the example</button>
+      <div id="exBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
       <div id="fields"></div>
       <div class="row" style="margin-top:12px">
         <div><label>Segment</label>
@@ -113,7 +113,7 @@ function renderTiles(){
 }
 function renderForm(){
   const t=PS.TREATMENTS[treatment];
-  $("#loadEx").hidden=!t.example;
+  $("#exBtns").innerHTML=(t.examples||[]).map((x,i)=>`<button class="btn small" data-ex="${i}">Load example: ${esc(x.name)}</button>`).join("");
   $("#rules").innerHTML=`<b>How we use it</b><ul>${t.rules.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`;
   $("#fields").innerHTML=t.fields.map(f=>{
     const v=esc(vals[treatment][f.k]??"");
@@ -129,7 +129,7 @@ function renderRefs(){
 }
 function rebuild(force){ if(dirty&&!force) return; $("#prompt").value=PS.buildPrompt(treatment,vals[treatment],common); dirty=false; $("#reset").hidden=true; }
 
-$("#loadEx").onclick=()=>{ vals[treatment]=Object.assign(PS.defaults(treatment),PS.TREATMENTS[treatment].example); dirty=false; renderForm(); rebuild(true); };
+$("#exBtns").onclick=e=>{ const b=e.target.closest("[data-ex]"); if(!b) return; vals[treatment]=Object.assign(PS.defaults(treatment),PS.TREATMENTS[treatment].examples[+b.dataset.ex].values); dirty=false; renderForm(); rebuild(true); };
 $("#tiles").onclick=e=>{const b=e.target.closest(".tile"); if(!b) return; treatment=b.dataset.k; dirty=false; renderTiles(); renderForm(); rebuild(true);};
 $("#fields").addEventListener("input",e=>{const f=e.target.dataset.f; if(!f) return; vals[treatment][f]=e.target.value; rebuild();});
 $("#segment").onchange=e=>{common.segment=e.target.value; rebuild();};

@@ -129,7 +129,9 @@ window.PS = (function () {
     let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
     h = (h * 60 + 360) % 360;
     const names = [[15, "red"], [40, "orange"], [65, "yellow"], [95, "lime green"], [160, "green"], [190, "teal"], [250, "blue"], [290, "purple"], [335, "pink"], [361, "red"]];
-    return (l < .28 ? "deep " : l > .7 ? "soft " : "") + names.find(n => h < n[0])[1];
+    const s = d / (1 - Math.abs(2 * l - 1));
+    const tone = l < .28 ? "deep " : l > .7 ? "soft " : (s >= .7 && l >= .38 && l <= .62 ? "bright " : "");
+    return tone + names.find(n => h < n[0])[1];
   }
   const colorPhrase = hex => `${nameColor(hex)} (${hex})`;
   const RATIO = {
@@ -151,6 +153,13 @@ Realism: real person, unretouched natural skin with visible pores, fine peach fu
 
 Avoid: text, logos, watermarks, multiple actions, busy backgrounds, flat front lighting, airbrushed or plastic skin, CGI or 3D render look, illustration, over-sharpened or HDR look, perfectly symmetrical face, glossy waxy skin, extra fingers, distorted hands.`;
 
+  // Locked style block for the Expression & Twist pill. Change it here, in one place.
+  const PLAYFUL_STYLE = `Style: playful conceptual studio portrait. Soft, bright, even studio lighting from a large softbox slightly above and in front, gentle fill so the whole face is clearly lit with no harsh shadows. Solid saturated seamless paper backdrop, single flat colour, no gradient. Sharp focus on the eyes and face. Shot on a 50mm lens, f/5.6, fine film grain, editorial humour campaign look, vivid but natural colour grade.
+
+Realism: real person caught in a genuine moment, unretouched natural skin with visible pores, fine peach fuzz, subtle uneven skin tone, flyaway hairs, slight facial asymmetry, real facial expression with natural muscle creases, photographed on a real camera.
+
+Avoid: text, logos, watermarks, readable labels, more than one prop, more than one twist, busy backgrounds, dramatic shadows, backlighting, airbrushed or plastic skin, CGI or 3D render look, illustration, over-sharpened or HDR look, perfectly symmetrical face, extra fingers, distorted hands.`;
+
   const TREATMENTS = {
     contrejour: {
       name: "Contre-jour beauty close-ups",
@@ -166,13 +175,13 @@ Avoid: text, logos, watermarks, multiple actions, busy backgrounds, flat front l
         { k: "rim", label: "Rim light from behind", type: "select", opts: ["left", "right"] },
         { k: "color", label: "Category colour (background gradient)", type: "color", def: "#1f7a7a" },
       ],
-      example: {
+      examples: [{ name: "Beard oil", values: {
         model: "a white European man in his 30s with a full dark beard",
         crop: "just below the eyes, only nose, lips and beard visible",
         action: "head tilted back as a single drop of beard oil falls from a glass dropper held by a hand entering from the top right",
         element: "the individual beard hairs and the amber oil drop",
         rim: "left", color: "#1f7a7a",
-      },
+      } }],
       // Base prompt + the locked style block. Empty slots stay in [BRACKETS] so they are easy to spot.
       build: v => `Tight macro crop of ${v.model || "[MODEL: ethnicity, gender, age range, hair]"}, cropped ${v.crop || "[CROP POINT]"}, ${v.action || "[ONE ACTION]"}. The hero element catching the light: ${v.element || "[ONE ELEMENT]"}. Rim light from behind ${v.rim || "left"}. Background: smooth ${nameColor(v.color || "#1f7a7a")} gradient.\n\n${CONTREJOUR_STYLE}`,
     },
@@ -180,23 +189,35 @@ Avoid: text, logos, watermarks, multiple actions, busy backgrounds, flat front l
       name: "Playful conceptual portraits",
       focus: "Expression & twist",
       blurb: "Full-face model caught mid-action with the product as a prop and one unexpected twist. Fun and human.",
-      style: "Full-face model caught mid-action with the product as a prop and one unexpected twist, shot with direct flash on a flat, saturated backdrop.",
-      rules: ["One full-face model, one twist per image", "One bold backdrop colour per category", "Direct flash with a realistic, unretouched feel", "Consistent 9:16 or 4:5 ratio"],
+      style: "Playful conceptual studio portrait: soft, bright, even softbox light so the whole face is clearly lit, on a solid saturated seamless backdrop, with a visible sense of humour.",
+      rules: ["One full-face model, one prop, one twist per image", "One solid saturated backdrop colour per category (flat, no gradient)", "Soft, bright, even light: no harsh shadows or backlighting", "Real, unretouched skin and a genuine facial expression", "Consistent 9:16 or 4:5 ratio"],
       fields: [
-        { k: "subject", label: "Product used as a prop", ph: "Face-wash tube held in the teeth" },
-        { k: "action", label: "Expression / action", ph: "Squinting and grinning mid-laugh" },
-        { k: "twist", label: "The one unexpected twist", ph: "Tube is held like a cigar" },
-        { k: "color", label: "Backdrop colour (flat, saturated)", type: "color", def: "#1f5fd6" },
+        { k: "model", label: "Model (ethnicity, gender, age range, hair)", ph: "a Black man in his 30s with short hair and a trimmed beard" },
+        { k: "expression", label: "Expression", ph: "scrunched in an exaggerated grimace" },
+        { k: "action", label: "One action", ph: "holding an unbranded tube of face mask between his teeth" },
+        { k: "product", label: "Product as prop", ph: "a plain white squeeze tube" },
+        { k: "twist", label: "The one unexpected twist", ph: "his whole face is covered in thick green clay mask, with only the eyes and mouth clean" },
+        { k: "outfit", label: "Outfit (one colour, simple)", ph: "a plain white t-shirt" },
+        { k: "color", label: "Backdrop colour (solid, saturated)", type: "color", def: "#1f5a33" },
       ],
-      build: (v, c) => [
-        `Photograph for a shopping-app starter card, ${RATIO[c.ratio]}.`,
-        `Playful conceptual portrait: a full-face portrait of the model caught mid-action. ${v.action || "[expression and action]"}.`,
-        CAST[c.segment],
-        `The product is a prop: ${v.subject || "[product]"}${c.category ? ` (category: ${c.category})` : ""}. One unexpected twist: ${v.twist || "[twist]"}.`,
-        `Direct on-camera flash with hard shadows and a realistic, unretouched feel (visible skin texture, no heavy retouching), against a flat, saturated ${colorPhrase(v.color || "#1f5fd6")} seamless backdrop.`,
-        "One full-face model only. One twist only.",
-        FOOTER, NO_TEXT,
-      ].join("\n"),
+      examples: [
+        { name: "Skincare", values: {
+          model: "a Black man in his 30s with short hair and a trimmed beard",
+          expression: "scrunched in an exaggerated grimace",
+          action: "holding an unbranded tube of face mask between his teeth",
+          product: "a plain white squeeze tube",
+          twist: "his whole face is covered in thick green clay mask, with only the eyes and mouth clean",
+          outfit: "a plain white t-shirt", color: "#1f5a33" } },
+        { name: "Haircare", values: {
+          model: "a white European man in his 20s with long straight light-brown hair",
+          expression: "wide-eyed and delighted",
+          action: "holding a pink balloon on top of his head with both hands",
+          product: "the balloon",
+          twist: "static electricity makes every strand of hair stand up and stretch toward the balloon",
+          outfit: "a plain yellow sweater", color: "#1f5fd6" } },
+      ],
+      // Base prompt + the locked style block. Empty slots stay in [BRACKETS] so they are easy to spot.
+      build: v => `Full-face portrait of ${v.model || "[MODEL: ethnicity, gender, age range, hair]"}, ${v.expression || "[EXPRESSION: e.g. \"wide-eyed and delighted\", \"scrunched in a grimace\"]"}, ${v.action || "[ONE ACTION: e.g. \"holding a tube of face mask between his teeth\"]"}. Product as prop: ${v.product || "[PRODUCT]"}. The twist: ${v.twist || "[ONE UNEXPECTED TWIST]"}. Wearing ${v.outfit || "[OUTFIT: one colour, simple]"}. Background: solid ${nameColor(v.color || "#1f5a33")} seamless backdrop.\n\n${PLAYFUL_STYLE}`,
     },
     hero: {
       name: "Hero product still life",
