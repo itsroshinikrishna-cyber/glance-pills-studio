@@ -370,14 +370,8 @@ function pickSwatch(e){
 $("#suggest").addEventListener("click",pickSwatch);
 $("#swatches").addEventListener("click",pickSwatch);
 function renderMascots(){
-  const c=cur(); const box=$("#mascots"); box.innerHTML="";
-  const mk=(url,inner)=>{ const b=document.createElement("button"); b.className=(url===c.mascot)?"on":""; b.append(inner); b.onclick=()=>{ c.mascot=url; renderMascots(); refresh(); save(c); }; box.append(b); };
-  const dc=document.createElement("canvas"); dc.width=dc.height=88; drawMascotDefault(dc.getContext("2d"),4,4,80); mk("",dc);
-  if(c.mascot){ const im=new Image(); im.src=c.mascot; mk(c.mascot,im); }
-  const lib=document.createElement("button"); lib.textContent="Library…"; lib.title="Choose a mascot from the shared library";
-  lib.style.cssText="width:auto;padding:0 12px;font-size:12px;font-weight:600";
-  lib.onclick=async()=>{ const it=await PS.pickAsset(["mascot"],"Choose a mascot"); if(it){ c.mascot=it.url; renderMascots(); refresh(); save(c); } };
-  box.append(lib);
+  const c=cur(); if(!c||c.type!=="prompt") return;
+  PS.mascotPicker($("#mascots"),{ value:c.mascot, onPick:url=>{ c.mascot=url; refresh(); save(c); } });
 }
 
 /* ---------- Events ---------- */

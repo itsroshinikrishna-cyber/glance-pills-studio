@@ -69,6 +69,14 @@ window.PS = (function () {
   .g p{margin:0;font-size:12px;line-height:1.5;color:#3c3846}
   .g .chips span{display:inline-block;background:#fdecea;color:#8a1f1c;padding:1px 6px;margin:0 4px 4px 0;font-size:11px}
   .g2{margin-top:6px}.g2>summary{cursor:pointer;font-size:12px;font-weight:600}
+  .mp{width:100%}
+  .mp-q{width:100%;border:1px solid #dcd8e4;padding:6px;margin-bottom:6px;font:inherit;background:#fff}
+  .mp-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:210px;overflow:auto;padding:2px}
+  .mp-t{aspect-ratio:1;border:1px solid #dcd8e4;background:#f1eef8;padding:3px;cursor:pointer;font:700 20px system-ui;color:#6c6877;display:flex;align-items:center;justify-content:center}
+  .mp-t img{width:100%;height:100%;object-fit:contain;display:block}
+  .mp-t:hover{border-color:#6b3df0}
+  .mp-t.on{border:2px solid #15131a;padding:2px}
+  .mp-foot{font-size:11px;color:#6c6877;margin-top:6px}
   pre.lock{white-space:pre-wrap;font:11px/1.5 ui-monospace,Menlo,monospace;background:#fff;border:1px solid #dcd8e4;padding:8px;max-height:240px;overflow:auto;margin:6px 0 0}
   #ps-toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#15131a;color:#fff;padding:8px 14px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
   #ps-toast.show{opacity:1}`;
@@ -338,6 +346,48 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
     return out;
   }
 
+  /* ---------- Mascot picker (emoji-style) ----------
+     A grid of every mascot in the shared library. One click picks it, the + tile uploads more. */
+  let mascotCache = null;
+  async function loadMascots(force) {
+    if (!mascotCache || force) { try { mascotCache = await listAssets("mascot"); } catch (e) { mascotCache = []; } }
+    return mascotCache;
+  }
+  const DEFAULT_MASCOT_SVG = '<svg viewBox="0 0 40 40" width="100%" height="100%"><defs><radialGradient id="mg" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#A57BFF"/><stop offset="1" stop-color="#4A1FD1"/></radialGradient></defs><ellipse cx="20" cy="22" rx="18" ry="16.5" fill="url(#mg)"/><ellipse cx="14.5" cy="22" rx="2.2" ry="4" fill="#fff"/><ellipse cx="25.5" cy="22" rx="2.2" ry="4" fill="#fff"/></svg>';
+  function mascotPicker(box, opts) {
+    opts = opts || {};
+    let value = opts.value || "", q = "";
+    box.classList.add("mp"); box.style.display = "block";
+    box.innerHTML = '<input type="text" class="mp-q" placeholder="Search mascots by name…" hidden><div class="mp-grid"></div><div class="mp-foot"></div>';
+    const grid = box.querySelector(".mp-grid"), search = box.querySelector(".mp-q"), foot = box.querySelector(".mp-foot");
+    const file = document.createElement("input"); file.type = "file"; file.accept = "image/*"; file.multiple = true; file.hidden = true; box.appendChild(file);
+    const tile = (label, inner, selected, onClick) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "mp-t" + (selected ? " on" : ""); b.title = label; b.innerHTML = inner; b.onclick = onClick; return b;
+    };
+    async function draw(force) {
+      const items = await loadMascots(force), shown = q ? items.filter(i => i.name.toLowerCase().includes(q)) : items;
+      search.hidden = items.length <= 12;
+      grid.innerHTML = "";
+      grid.appendChild(tile("Default mascot", DEFAULT_MASCOT_SVG, !value, () => pick("", null)));
+      shown.forEach(it => grid.appendChild(tile(it.name, `<img src="${esc(it.url)}" alt="" loading="lazy">`, it.url === value, () => pick(it.url, it))));
+      grid.appendChild(tile("Upload more mascots (PNG with a transparent background)", "+", false, () => file.click()));
+      foot.textContent = items.length ? `${items.length} mascot${items.length > 1 ? "s" : ""}. Click one to choose it, + to add more.` : "No mascots yet. Click + to upload your first one (PNG, transparent background).";
+    }
+    function pick(url, item) { value = url; draw(); if (opts.onPick) opts.onPick(url, item); }
+    search.oninput = () => { q = search.value.trim().toLowerCase(); draw(); };
+    file.onchange = async () => {
+      const files = [...file.files]; file.value = ""; if (!files.length) return;
+      try {
+        const cfg = await config(), ups = [];
+        for (const f of files) ups.push(await uploadFile("mascot", f));
+        if (!cfg.offline) { toast(`${files.length} mascot${files.length > 1 ? "s" : ""} added`); await loadMascots(true); }
+        value = ups[0].url; if (opts.onPick) opts.onPick(value, ups[0]); draw();
+      } catch (e) { toast(e.message); }
+    };
+    draw();
+    return { setValue(v) { value = v || ""; draw(); } };
+  }
+
   /* Guidelines panel for a pill. The look / realism / never-include text is read from the same
      locked style block that goes into every prompt, so the two can never disagree. */
   function guideHTML(key, opts) {
@@ -361,5 +411,5 @@ Avoid: faces, eyes, lips, noses, any part of the head, text, logos, watermarks, 
     return `<b>Shared storage isn't connected</b>${cfg && cfg.reason ? " (" + esc(cfg.reason) + ")" : ""}. Open <a href="api/health" target="_blank">api/health</a> to see what is missing. The setup steps are in DEPLOY.md.`;
   }
 
-  return { guideHTML, offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
+  return { mascotPicker, loadMascots, guideHTML, offlineMsg, api, config, readFile, uploadFile, listAssets, pickAsset, nav, toast, esc, TREATMENTS, buildPrompt, defaults, nameColor, splitCopy, copyIssues };
 })();
