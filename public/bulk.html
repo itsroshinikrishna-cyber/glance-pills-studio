@@ -56,6 +56,26 @@
   .bar span{color:var(--muted)}
   .empty{color:var(--muted);background:#fff;border:1px dashed var(--line);padding:40px 20px;text-align:center;grid-column:1/-1}
   .note{background:#fff7e0;border:1px solid #ecd58a;padding:10px 12px;margin-top:14px;font-size:13px}
+  .pair .cv{cursor:pointer}
+  .pair .row2{display:flex;justify-content:space-between;align-items:center;gap:6px}
+  .ed{position:fixed;inset:0;background:rgba(10,8,16,.65);z-index:20;display:flex;align-items:center;justify-content:center;padding:12px}
+  .ed[hidden]{display:none}
+  .edbox{background:#fff;width:min(960px,100%);max-height:94vh;display:flex;flex-direction:column;border:1px solid var(--ink)}
+  .edhead{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .edbody{display:grid;grid-template-columns:auto 1fr;overflow:auto;min-height:0}
+  .edcv{background:#555;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .edcv canvas{display:block;box-shadow:0 8px 30px rgba(0,0,0,.35);touch-action:none}
+  .edctl{padding:14px;overflow:auto;min-width:300px}
+  .edctl label{margin:10px 0 4px}.edctl label:first-child{margin-top:0}
+  .edctl input[type=range]{width:100%}
+  .edctl textarea{font-family:inherit;font-size:14px}
+  .edctl input[type=color]{width:42px;height:30px;padding:0;border:1px solid var(--line);background:#fff}
+  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .sgrid button{border:1px solid var(--line);background:#fff;padding:3px;text-align:left;font-size:11px;cursor:pointer}
+  .sgrid button i{display:block;height:28px}
+  .sgrid button.on{border:2px solid var(--ink);padding:2px}
+  .sgrid button:disabled{opacity:.4;cursor:default}
+  @media (max-width:760px){.edbody{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -101,6 +121,7 @@
       <div data-img><label>Gradient colour</label><select id="o-grad">
         <option value="sugg1">Option 1 (best match)</option><option value="sugg2">Option 2</option><option value="sugg3">Option 3</option>
         <option value="darkVibrant">Dark Vibrant</option><option value="vibrant">Vibrant</option><option value="darkMuted">Dark Muted</option><option value="muted">Muted</option><option value="dominant">Dominant</option></select></div>
+      <div data-img><label>Gradient height</label><input type="range" id="o-scrimH" min="25" max="80" value="55" style="width:100%"></div>
       <div data-img><label>Copy hierarchy</label><select id="o-split"><option value="auto">Auto: split one line into small line, headline and subline</option><option value="columns">Use my columns exactly as written</option></select></div>
       <div data-img><label>Match images to copy by</label><div class="seg" id="o-match"><button data-v="order" class="on">Order</button><button data-v="filename">File name</button></div></div>
       <div data-prompt hidden><label>Card colour</label><select id="o-palette"><option value="rotate">Rotate the 4 brand colours</option><option value="purple">Purple</option><option value="pink">Pink</option><option value="blue">Blue</option><option value="yellow">Yellow</option></select></div>
@@ -112,6 +133,14 @@
   <div class="pairs" id="pairs"><div class="empty">Add images and copy to see your cards here.</div></div>
 </main>
 
+<div class="ed" id="ed" hidden>
+  <div class="edbox">
+    <div class="edhead"><button class="btn small" id="edPrev">← Prev</button><b id="edTitle">Edit card</b><button class="btn small" id="edNext">Next →</button>
+      <span style="flex:1"></span><button class="btn small" id="edReset">Reset this card's edits</button><button class="btn primary small" id="edDone">Done</button></div>
+    <div class="edbody"><div class="edcv"><canvas id="edCanvas"></canvas><div class="hint" id="edHint" style="color:#ddd;text-align:center"></div></div><div class="edctl" id="edCtl"></div></div>
+  </div>
+</div>
+
 <div class="bar"><span id="barInfo">Nothing to create yet</span><button class="btn primary" id="create" disabled>Create cards and open in Studio</button></div>
 
 <script src="shared.js"></script>
@@ -121,7 +150,7 @@
 "use strict";
 PS.nav("bulk");
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)], esc=PS.esc;
-const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto"}, ov:{}, pairs:[] };
+const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55}, ov:{}, pairs:[] };
 const BRAND=["purple","pink","blue","yellow"], MAX_WORDS=7;
 $("#o-treatment").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<option value="${k}">${esc(t.name)}</option>`).join("");
 
@@ -216,6 +245,7 @@ function bindSeg(id,key){ $(id).onclick=e=>{const b=e.target.closest("button"); 
 bindSeg("#o-type","type"); bindSeg("#o-align","align"); bindSeg("#o-match","match");
 for(const [id,k] of [["#o-segment","segment"],["#o-treatment","treatment"],["#o-grad","grad"],["#o-palette","palette"],["#o-split","split"]]) $(id).onchange=e=>{S.opts[k]=e.target.value; update();};
 $("#o-category").oninput=e=>{S.opts.category=e.target.value; update();};
+$("#o-scrimH").oninput=e=>{S.opts.scrimH=+e.target.value; update();};
 $("#copy").oninput=()=>update();
 
 /* ---------- Pairing + cards ---------- */
@@ -245,12 +275,17 @@ function makeCard(p,i){
   if(type==="prompt"){
     c.question=r.question||r.headline||""; c.subtext=r.subtext||r.sub||"";
     c.palette=normPal(r.palette)||(o.palette==="rotate"?BRAND[i%4]:o.palette);
+    if(ov.question!==undefined) c.question=ov.question; if(ov.subtext!==undefined) c.subtext=ov.subtext; if(ov.palette) c.palette=ov.palette;
   } else {
     c.treatment=normTreat(r.treatment)||o.treatment; c.kicker=r.kicker||""; c.headline=r.headline||""; c.sub=r.sub||"";
     // One full line in the headline column: the tool sets the hierarchy. Explicit kicker/sub columns or manual line breaks win.
     if(o.split==="auto"&&c.headline&&!c.kicker&&!c.sub&&!c.headline.includes("\n")) Object.assign(c,PS.splitCopy(c.headline));
     c.align=normAlign(r.align)||(o.align==="alt"?(i%2?"right":"left"):o.align);
-    c.scrimSource=ov.grad||normGrad(r.gradient)||o.grad;
+    c.scrimSource=ov.grad||normGrad(r.gradient)||o.grad; c.scrimH=ov.scrimH!==undefined?ov.scrimH:o.scrimH;
+    if(ov.scrimColor) c.scrimColor=ov.scrimColor;
+    if(ov.zoom!==undefined) c.zoom=ov.zoom; if(ov.ox!==undefined) c.ox=ov.ox; if(ov.oy!==undefined) c.oy=ov.oy;
+    if(ov.kicker!==undefined) c.kicker=ov.kicker; if(ov.headline!==undefined) c.headline=ov.headline; if(ov.sub!==undefined) c.sub=ov.sub;
+    if(ov.align) c.align=ov.align;
     const im=ov.img!==undefined?(ov.img===-1?null:S.images.find(x=>x.id===ov.img)):p.img;
     c.img=im?(im.url||im.src):null; c._im=im;
   }
@@ -274,10 +309,11 @@ function renderAll(){
     if(!isPrompt&&!c.img) badges.push('<span class="badge">No image</span>');
     if(!(isPrompt?c.question:c.headline||c.kicker||c.sub)) badges.push('<span class="badge">No copy</span>');
     if(!isPrompt) PS.copyIssues(c,MAX_WORDS).forEach(m=>badges.push(`<span class="badge" title="${esc(m)}">${esc(m.length>26?m.slice(0,24)+"…":m)}</span>`));
+    if(Object.keys(ov).some(k=>!["img","grad","skip"].includes(k))||ov.grad==="custom") badges.push('<span class="badge ok">Edited</span>');
     d.innerHTML=`<div class="top"><span>Card ${i+1}</span><span>${badges.join("")||'<span class="badge ok">Ready</span>'}</span></div>
-      <div class="cv"><canvas></canvas></div>
+      <div class="cv" data-edit="${i}" title="Tap to edit this card"><canvas></canvas></div>
       ${isPrompt?"":`<select data-i="${i}" data-r="img"><option value="-1">No image</option>${imgs.map(im=>`<option value="${im.id}" ${c._im&&c._im.id===im.id?"selected":""}>${esc(im.name)}</option>`).join("")}</select><div class="opts" data-i="${i}"></div>`}
-      <label class="inc"><input type="checkbox" data-i="${i}" data-r="inc" ${ov.skip?"":"checked"}> Include</label>`;
+      <div class="row2"><label class="inc"><input type="checkbox" data-i="${i}" data-r="inc" ${ov.skip?"":"checked"}> Include</label><button class="btn small" data-edit="${i}">Edit card</button></div>`;
     box.appendChild(d);
     const cv=d.querySelector("canvas"); CR.render(c,cv,2); cv.style.width=W+"px"; cv.style.height=H+"px";
     if(!isPrompt){
@@ -298,9 +334,90 @@ $("#pairs").addEventListener("click",e=>{
   const b=e.target.closest(".opts button"); if(!b||b.disabled) return;
   const i=b.parentElement.dataset.i; (S.ov[i]=S.ov[i]||{}).grad=b.dataset.g; renderAll();
 });
-CR.onImageLoad=()=>update();
+CR.onImageLoad=()=>{ update(); if(EI>=0) paintEditor(); };
+$("#pairs").addEventListener("click",e=>{ const t=e.target.closest("[data-edit]"); if(t) openEditor(+t.dataset.edit); });
 function included(){ return S.pairs.map((p,i)=>({p,i})).filter(({p,i})=>!(S.ov[i]&&S.ov[i].skip)&&(p.row||p.img)); }
 function setBar(){ const n=included().length; $("#create").disabled=!n; $("#barInfo").textContent=n?`${n} card${n>1?"s":""} ready to create`:"Nothing to create yet"; }
+
+/* ---------- Card editor (tap a card) ---------- */
+let EI=-1, EDSC=2;
+const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette"];
+const edOv=()=>(S.ov[EI]=S.ov[EI]||{});
+const edCard=()=>makeCard(S.pairs[EI],EI);
+function openEditor(i){ EI=i; $("#ed").hidden=false; buildEditor(); }
+function closeEditor(){ $("#ed").hidden=true; EI=-1; renderAll(); }
+function buildEditor(){
+  const c=edCard(), ctl=$("#edCtl"), isP=c.type==="prompt";
+  $("#edTitle").textContent=`Edit card ${EI+1} of ${S.pairs.length}`;
+  $("#edPrev").disabled=EI<=0; $("#edNext").disabled=EI>=S.pairs.length-1;
+  ctl.innerHTML=isP?`
+    <label>Question</label><textarea data-f="question" rows="3"></textarea>
+    <label>Category subtext (optional)</label><input type="text" data-f="subtext">
+    <label>Colour</label><div class="seg" id="edPal">${BRAND.map(p=>`<button data-p="${p}">${p[0].toUpperCase()+p.slice(1)}</button>`).join("")}</div>`
+  :`
+    <label>Small line above (optional)</label><input type="text" data-f="kicker">
+    <label>Headline (Enter = line break)</label><textarea data-f="headline" rows="2"></textarea>
+    <label>Small line below (optional)</label><input type="text" data-f="sub">
+    <button class="btn small" id="edSplit" style="width:100%;margin-top:8px">Auto-split one line into the 3 levels</button>
+    <div class="count" id="edWc" style="margin-top:8px"></div>
+    <label>Text side</label><div class="seg" id="edAlign"><button data-a="left">Left</button><button data-a="right">Right</button></div>
+    <label>Gradient colour</label><div class="sgrid" id="edSw"></div>
+    <div class="row" style="margin-top:8px"><input type="color" id="edColor" title="Custom colour"><span class="hint" style="margin:0">Custom colour</span></div>
+    <label>Gradient height</label><input type="range" data-f="scrimH" min="25" max="80" step="1">
+    <label>Image zoom</label><input type="range" data-f="zoom" min="1" max="3" step="0.01">
+    <label>Position X</label><input type="range" data-f="ox" min="-1" max="1" step="0.01">
+    <label>Position Y</label><input type="range" data-f="oy" min="-1" max="1" step="0.01">`;
+  fillEditor(); paintEditor();
+}
+function fillEditor(){
+  const c=edCard();
+  document.querySelectorAll("#edCtl [data-f]").forEach(el=>{ const v=c[el.dataset.f]; el.value=v===undefined||v===null?"":v; });
+  if(c.type!=="prompt") $("#edColor").value=c.scrimColor;
+}
+function paintEditor(){
+  if(EI<0) return;
+  const c=edCard(), cv=$("#edCanvas"), isP=c.type==="prompt", [W,H]=CR.SIZES[c.type];
+  EDSC=Math.max(1.4,Math.min(2.4,(window.innerHeight*0.72)/H));
+  CR.render(c,cv,EDSC*(window.devicePixelRatio||1)); cv.style.width=W*EDSC+"px"; cv.style.height=H*EDSC+"px";
+  $("#edHint").textContent=isP?"":(c.img?"Drag the image to reposition it.":"This card has no image yet. Pick one in the grid.");
+  if(isP){ document.querySelectorAll("#edPal button").forEach(b=>b.classList.toggle("on",b.dataset.p===c.palette)); return; }
+  document.querySelectorAll("#edAlign button").forEach(b=>b.classList.toggle("on",b.dataset.a===c.align));
+  const pal=c.img&&CR.paletteFor(c.img), sg=(pal&&pal.suggestions)||[], box=$("#edSw"); box.innerHTML="";
+  for(let k=0;k<3;k++){ const s=sg[k], b=document.createElement("button"); b.dataset.g="sugg"+(k+1); b.disabled=!s; b.className=c.scrimSource==="sugg"+(k+1)?"on":"";
+    b.title=s?`Option ${k+1}: ${s.label} ${s.hex}`:"Add an image first"; b.innerHTML=`<i style="background:${s?s.hex:"#eee"}"></i>Option ${k+1}`; box.appendChild(b); }
+  const iss=PS.copyIssues(c,MAX_WORDS), wcEl=$("#edWc"); wcEl.textContent=`${words(c)} / ${MAX_WORDS} words`+(iss.length?" · "+iss.filter(m=>!/words \(max/.test(m)).join(" · "):""); wcEl.className="count "+(iss.length?"bad":"good");
+}
+$("#edCtl").addEventListener("input",e=>{
+  const k=e.target.dataset.f, ov=edOv();
+  if(k){ ov[k]=e.target.type==="range"?parseFloat(e.target.value):e.target.value; paintEditor(); }
+  else if(e.target.id==="edColor"){ ov.grad="custom"; ov.scrimColor=e.target.value; paintEditor(); }
+});
+$("#edCtl").addEventListener("click",e=>{
+  const ov=edOv(), a=e.target.closest("[data-a]"), g=e.target.closest("[data-g]"), p=e.target.closest("[data-p]");
+  if(a){ ov.align=a.dataset.a; paintEditor(); }
+  else if(g&&!g.disabled){ ov.grad=g.dataset.g; delete ov.scrimColor; paintEditor(); }
+  else if(p){ ov.palette=p.dataset.p; paintEditor(); }
+  else if(e.target.id==="edSplit"){
+    const c=edCard(), s=PS.splitCopy([c.kicker,c.headline.replace(/\n/g," "),c.sub].filter(Boolean).join(" "));
+    ov.kicker=s.kicker; ov.headline=s.headline; ov.sub=s.sub; fillEditor(); paintEditor();
+  }
+});
+$("#edReset").onclick=()=>{ const o=S.ov[EI]||{}, keep={}; if(o.img!==undefined) keep.img=o.img; if(o.skip) keep.skip=true; S.ov[EI]=keep; buildEditor(); };
+$("#edPrev").onclick=()=>{ if(EI>0){ EI--; buildEditor(); } };
+$("#edNext").onclick=()=>{ if(EI<S.pairs.length-1){ EI++; buildEditor(); } };
+$("#edDone").onclick=closeEditor;
+$("#ed").addEventListener("click",e=>{ if(e.target.id==="ed") closeEditor(); });
+document.addEventListener("keydown",e=>{ if(EI>=0&&e.key==="Escape") closeEditor(); });
+let edDrag=null;
+$("#edCanvas").addEventListener("pointerdown",e=>{ if(EI<0) return; const c=edCard(), img=c.type!=="prompt"&&CR.getImg(c.img); if(!img) return; edDrag={x:e.clientX,y:e.clientY,ox:c.ox,oy:c.oy}; e.target.setPointerCapture(e.pointerId); });
+$("#edCanvas").addEventListener("pointermove",e=>{
+  if(!edDrag) return; const c=edCard(), [W,H]=CR.SIZES[c.type], r=CR.coverRect(CR.getImg(c.img),c,W,H), ov=edOv();
+  const dx=(e.clientX-edDrag.x)/EDSC, dy=(e.clientY-edDrag.y)/EDSC;
+  if(r.dw>W+.5) ov.ox=Math.max(-1,Math.min(1,edDrag.ox+dx/((r.dw-W)/2)));
+  if(r.dh>H+.5) ov.oy=Math.max(-1,Math.min(1,edDrag.oy+dy/((r.dh-H)/2)));
+  const ox=document.querySelector('#edCtl [data-f="ox"]'), oy=document.querySelector('#edCtl [data-f="oy"]'); if(ox) ox.value=ov.ox??c.ox; if(oy) oy.value=ov.oy??c.oy; paintEditor();
+});
+$("#edCanvas").addEventListener("pointerup",()=>{ edDrag=null; });
 
 /* ---------- Create ---------- */
 $("#create").onclick=async()=>{
