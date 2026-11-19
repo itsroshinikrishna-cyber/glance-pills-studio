@@ -48,6 +48,6 @@ export default async function handler(req, res) {
     return fail(res, "Method not allowed", 405);
   } catch (e) {
     console.error(e);
-    return fail(res, "Library error", 500);
+    return fail(res, "Library error: " + String((e && e.message) || e).slice(0, 220), 500);
   }
 }
