@@ -176,6 +176,8 @@
       <label>Alignment</label>
       <div class="seg" data-k="align"><button data-v="left">Bottom left</button><button data-v="right">Bottom right</button></div>
       <div class="count" id="wc" style="margin-top:8px"></div>
+      <label>Text size <span class="fsVal" style="font-weight:400;color:var(--muted)"></span></label>
+      <div class="row"><button class="btn small" data-fs="-0.1" title="Smaller text">A−</button><input type="range" data-k="fontScale" min="0.6" max="1.8" step="0.05" style="flex:1"><button class="btn small" data-fs="0.1" title="Bigger text">A+</button></div>
       <button class="btn small" id="btnSplit" style="margin-top:8px;width:100%" title="Type or paste one full line into the headline, then click">Auto-split one line into the 3 levels</button>
     </fieldset>
 
@@ -183,6 +185,8 @@
       <legend>Prompt card</legend>
       <label>Question <span style="font-weight:400;color:var(--muted)">(written how a user would type it)</span></label>
       <textarea data-k="question" rows="3" placeholder="Two underrated hacks to find your undertone"></textarea>
+      <label>Text size <span class="fsVal" style="font-weight:400;color:var(--muted)"></span></label>
+      <div class="row"><button class="btn small" data-fs="-0.1" title="Smaller text">A−</button><input type="range" data-k="fontScale" min="0.6" max="1.8" step="0.05" style="flex:1"><button class="btn small" data-fs="0.1" title="Bigger text">A+</button></div>
       <label>Category subtext <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
       <input type="text" data-k="subtext" placeholder="Skincare">
       <label>Colour</label>
@@ -301,6 +305,7 @@ function drawPreview(){
   preview.style.width=W*PREVIEW_SCALE+"px"; preview.style.height=H*PREVIEW_SCALE+"px";
   preview.style.cursor = c.type!=="prompt"&&c.img ? "grab":"default";
   const n=wordCount(c), wc=$("#wc");
+  document.querySelectorAll(".fsVal").forEach(e=>e.textContent=Math.round((c.fontScale||1)*100)+"%");
   const issues=PS.copyIssues(c,MAX_WORDS);
   wc.textContent=`${n} / ${MAX_WORDS} words`+(issues.length?" · "+issues.filter(m=>!/words \(max/.test(m)).join(" · "):""); wc.className="count "+(issues.length?"bad":"good");
   const q=(c.question||"").trim().split(/\s+/).filter(Boolean).length;
@@ -398,6 +403,12 @@ document.addEventListener("click",e=>{
     const c=blank(n.dataset.new); if(c.type==="prompt") c.palette="purple";
     state.cards.unshift(c); sel=c.id; buildList(); syncUI(); refresh(); save();
   }
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-fs]"); if(!b) return;
+  const c=cur(); if(!c) return;
+  c.fontScale=Math.max(.6,Math.min(1.8,Math.round(((+c.fontScale||1)+parseFloat(b.dataset.fs))*100)/100));
+  syncUI(); refresh(); save(c);
 });
 $("#btnSplit").onclick=()=>{
   const c=cur(); if(!c||c.type==="prompt") return;

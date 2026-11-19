@@ -116,6 +116,8 @@
       <div><label>Format</label><div class="seg" id="o-type"><button data-v="image9" class="on">9:16</button><button data-v="image45">4:5</button><button data-v="prompt">Prompt 1:1</button></div></div>
       <div><label>Segment</label><select id="o-segment"><option value="female">Female</option><option value="male">Male</option><option value="neutral" selected>Neutral</option></select></div>
       <div><label>Category</label><input type="text" id="o-category" placeholder="Skincare"></div>
+      <div><label>Text size <span id="o-fsVal" style="font-weight:400;color:var(--muted)">100%</span></label>
+        <div class="row" style="flex-wrap:nowrap"><button class="btn small" data-gfs="-0.1" title="Smaller text">A−</button><input type="range" id="o-fontScale" min="0.6" max="1.8" step="0.05" value="1" style="flex:1"><button class="btn small" data-gfs="0.1" title="Bigger text">A+</button></div></div>
       <div data-img><label>Treatment</label><select id="o-treatment"></select></div>
       <div data-img><label>Text side</label><div class="seg" id="o-align"><button data-v="left" class="on">Left</button><button data-v="right">Right</button><button data-v="alt">Alternate</button></div></div>
       <div data-img><label>Gradient colour</label><select id="o-grad">
@@ -154,7 +156,7 @@
 "use strict";
 PS.nav("bulk");
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)], esc=PS.esc;
-const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55,mascotSize:30,mascotX:0,mascot:"",mascotRotate:false}, ov:{}, pairs:[] };
+const S={ images:[], opts:{type:"image9",segment:"neutral",category:"",treatment:"contrejour",align:"left",grad:"sugg1",match:"order",palette:"rotate",split:"auto",scrimH:55,mascotSize:30,mascotX:0,mascot:"",mascotRotate:false,fontScale:1}, ov:{}, pairs:[] };
 const BRAND=["purple","pink","blue","yellow"], MAX_WORDS=7;
 let MASCOTS=[];   // every mascot in the shared library
 $("#o-treatment").innerHTML=Object.entries(PS.TREATMENTS).map(([k,t])=>`<option value="${k}">${esc(t.name)}</option>`).join("");
@@ -252,6 +254,9 @@ for(const [id,k] of [["#o-segment","segment"],["#o-treatment","treatment"],["#o-
 $("#o-category").oninput=e=>{S.opts.category=e.target.value; update();};
 $("#o-scrimH").oninput=e=>{S.opts.scrimH=+e.target.value; update();};
 $("#o-mascotSize").oninput=e=>{S.opts.mascotSize=+e.target.value; update();};
+function setGlobalFs(v){ v=Math.max(.6,Math.min(1.8,Math.round(v*100)/100)); S.opts.fontScale=v; $("#o-fontScale").value=v; $("#o-fsVal").textContent=Math.round(v*100)+"%"; update(); }
+$("#o-fontScale").oninput=e=>setGlobalFs(+e.target.value);
+document.querySelectorAll("[data-gfs]").forEach(b=>b.onclick=()=>setGlobalFs(S.opts.fontScale+parseFloat(b.dataset.gfs)));
 const refreshMascots=()=>PS.loadMascots().then(m=>{ MASCOTS=m; update(); });
 PS.mascotPicker($("#o-mascot"),{ value:"", onPick:url=>{ S.opts.mascot=url; refreshMascots(); update(); } });
 $("#o-mascotRotate").onchange=e=>{ S.opts.mascotRotate=e.target.checked; update(); };
@@ -287,6 +292,7 @@ function computePairs(){
 function makeCard(p,i){
   const o=S.opts, r=p.row||{}, ov=S.ov[i]||{}, type=normFormat(r.format)||o.type, c=CR.blank(type);
   c.segment=normSeg(r.segment)||o.segment; c.category=(r.category||o.category||"").slice(0,60);
+  c.fontScale=ov.fontScale!==undefined?ov.fontScale:o.fontScale;
   if(type==="prompt"){
     c.question=r.question||r.headline||""; c.subtext=r.subtext||r.sub||"";
     c.palette=normPal(r.palette)||(o.palette==="rotate"?BRAND[i%4]:o.palette);
@@ -361,7 +367,7 @@ function setBar(){ const n=included().length; $("#create").disabled=!n; $("#barI
 
 /* ---------- Card editor (tap a card) ---------- */
 let EI=-1, EDSC=2;
-const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette","mascotSize","mascot","mascotX"];
+const ED_RESET_KEYS=["kicker","headline","sub","align","scrimH","scrimColor","zoom","ox","oy","question","subtext","palette","mascotSize","mascot","mascotX","fontScale"];
 const edOv=()=>(S.ov[EI]=S.ov[EI]||{});
 const edCard=()=>makeCard(S.pairs[EI],EI);
 function openEditor(i){ EI=i; $("#ed").hidden=false; buildEditor(); }
@@ -372,6 +378,8 @@ function buildEditor(){
   $("#edPrev").disabled=EI<=0; $("#edNext").disabled=EI>=S.pairs.length-1;
   ctl.innerHTML=isP?`
     <label>Question</label><textarea data-f="question" rows="3"></textarea>
+    <label>Text size <span id="edFs" style="font-weight:400;color:var(--muted)"></span></label>
+    <div class="row" style="flex-wrap:nowrap"><button class="btn small" data-efs="-0.1" title="Smaller text">A−</button><input type="range" data-f="fontScale" min="0.6" max="1.8" step="0.05" style="flex:1"><button class="btn small" data-efs="0.1" title="Bigger text">A+</button></div>
     <label>Category subtext (optional)</label><input type="text" data-f="subtext">
     <label>Mascot size</label><input type="range" data-f="mascotSize" min="16" max="80" step="1">
     <label>Mascot position</label><div class="seg" id="edMx"><button data-mx="0">Left</button><button data-mx="0.5">Centre</button><button data-mx="1">Right</button></div>
@@ -385,6 +393,8 @@ function buildEditor(){
     <label>Small line below (optional)</label><input type="text" data-f="sub">
     <button class="btn small" id="edSplit" style="width:100%;margin-top:8px">Auto-split one line into the 3 levels</button>
     <div class="count" id="edWc" style="margin-top:8px"></div>
+    <label>Text size <span id="edFs" style="font-weight:400;color:var(--muted)"></span></label>
+    <div class="row" style="flex-wrap:nowrap"><button class="btn small" data-efs="-0.1" title="Smaller text">A−</button><input type="range" data-f="fontScale" min="0.6" max="1.8" step="0.05" style="flex:1"><button class="btn small" data-efs="0.1" title="Bigger text">A+</button></div>
     <label>Text side</label><div class="seg" id="edAlign"><button data-a="left">Left</button><button data-a="right">Right</button></div>
     <label>Gradient colour</label><div class="sgrid" id="edSw"></div>
     <div class="row" style="margin-top:8px"><input type="color" id="edColor" title="Custom colour"><span class="hint" style="margin:0">Custom colour</span></div>
@@ -405,6 +415,7 @@ function paintEditor(){
   const c=edCard(), cv=$("#edCanvas"), isP=c.type==="prompt", [W,H]=CR.SIZES[c.type];
   EDSC=Math.max(1.4,Math.min(2.4,(window.innerHeight*0.72)/H));
   CR.render(c,cv,EDSC*(window.devicePixelRatio||1)); cv.style.width=W*EDSC+"px"; cv.style.height=H*EDSC+"px";
+  const fv=$("#edFs"); if(fv) fv.textContent=Math.round((+c.fontScale||1)*100)+"%";
   $("#edHint").textContent=isP?"":(c.img?"Drag the image to reposition it.":"This card has no image yet. Pick one in the grid.");
   if(isP){ document.querySelectorAll("#edPal button").forEach(b=>b.classList.toggle("on",b.dataset.p===c.palette)); return; }
   document.querySelectorAll("#edAlign button").forEach(b=>b.classList.toggle("on",b.dataset.a===c.align));
@@ -419,8 +430,9 @@ $("#edCtl").addEventListener("input",e=>{
   else if(e.target.id==="edColor"){ ov.grad="custom"; ov.scrimColor=e.target.value; paintEditor(); }
 });
 $("#edCtl").addEventListener("click",e=>{
-  const ov=edOv(), a=e.target.closest("[data-a]"), g=e.target.closest("[data-g]"), p=e.target.closest("[data-p]"), mx=e.target.closest("[data-mx]");
-  if(mx){ ov.mascotX=parseFloat(mx.dataset.mx); fillEditor(); paintEditor(); }
+  const ov=edOv(), a=e.target.closest("[data-a]"), g=e.target.closest("[data-g]"), p=e.target.closest("[data-p]"), mx=e.target.closest("[data-mx]"), fsb=e.target.closest("[data-efs]");
+  if(fsb){ const cur0=+edCard().fontScale||1; ov.fontScale=Math.max(.6,Math.min(1.8,Math.round((cur0+parseFloat(fsb.dataset.efs))*100)/100)); fillEditor(); paintEditor(); }
+  else if(mx){ ov.mascotX=parseFloat(mx.dataset.mx); fillEditor(); paintEditor(); }
   else if(a){ ov.align=a.dataset.a; paintEditor(); }
   else if(g&&!g.disabled){ ov.grad=g.dataset.g; delete ov.scrimColor; paintEditor(); }
   else if(p){ ov.palette=p.dataset.p; paintEditor(); }

@@ -16,7 +16,7 @@ function blank(type){
   return { id:uid(), type, segment:"neutral", category:"", treatment:"contrejour",
     kicker:"", headline:"", sub:"", align:"left", img:null, zoom:1, ox:0, oy:0,
     scrimSource:"sugg1", scrimColor:"#20483a", scrimH:55,
-    question:"", subtext:"", palette:"purple", mascot:"", mascotSize:30, mascotX:0, createdAt:Date.now() };
+    question:"", subtext:"", palette:"purple", mascot:"", mascotSize:30, mascotX:0, fontScale:1, createdAt:Date.now() };
 }
 
 /* ---------- Image cache ---------- */
@@ -107,9 +107,10 @@ function drawImageCard(ctx,c,W,H){
     for(let i=lines.length-1;i>=0;i--){ ctx.fillText(lines[i],x,base); base-=lh; }
     cursor=(base+lh)-size*.72-gap;
   };
-  stack(c.sub,600,6.5,.4,8.5,4.5,W-2*pad);
-  stack(c.headline,900,15,0,14.2,3.5,W*.74);
-  stack(c.kicker,600,6.5,.4,8.5,0,W-2*pad);
+  const fs=Math.max(.6,Math.min(1.8,+c.fontScale||1));   // "Text size": scales every level together
+  stack(c.sub,600,6.5*fs,.4,8.5*fs,4.5*fs,W-2*pad);
+  stack(c.headline,900,15*fs,0,14.2*fs,3.5*fs,W*.74);
+  stack(c.kicker,600,6.5*fs,.4,8.5*fs,0,W-2*pad);
   if("letterSpacing" in ctx) ctx.letterSpacing="0px";
 }
 function drawMascotDefault(ctx,x,y,s){
@@ -150,11 +151,12 @@ function drawPrompt(ctx,c,W,H){
   ctx.fillStyle="#14121a"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
   // The question sits below the mascot. A bigger mascot pushes it down, and the text shrinks a little if it would run off the card.
   const top=14+mh+26, bottom=H-(c.subtext?24:14);
-  let size=15, lines;
-  for(;;){ setFont(ctx,400,size,-.1); lines=wrap(ctx,c.question||"",W-28); if(size<=10||top+(lines.length-1)*size*1.167<=bottom) break; size-=.5; }
+  const fs=Math.max(.6,Math.min(1.8,+c.fontScale||1));   // "Text size"
+  let size=15*fs, lines;
+  for(;;){ setFont(ctx,400,size,-.1); lines=wrap(ctx,c.question||"",W-28); if(size<=8||top+(lines.length-1)*size*1.167<=bottom) break; size-=.5; }
   const lh=size*1.167; let y=top;
   for(const l of lines){ ctx.fillText(l,14,y); y+=lh; }
-  if(c.subtext){ setFont(ctx,600,6.5,.4); ctx.fillStyle="rgba(20,18,26,.6)"; ctx.fillText(c.subtext.toUpperCase(),14,H-12); if("letterSpacing" in ctx) ctx.letterSpacing="0px"; }
+  if(c.subtext){ setFont(ctx,600,6.5*fs,.4); ctx.fillStyle="rgba(20,18,26,.6)"; ctx.fillText(c.subtext.toUpperCase(),14,H-12); if("letterSpacing" in ctx) ctx.letterSpacing="0px"; }
 }
 function render(c,canvas,scale){
   const [W,H]=SIZES[c.type];

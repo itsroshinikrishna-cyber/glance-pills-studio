@@ -28,6 +28,7 @@ export function sanitize(c) {
     mascot: url(c.mascot),
     mascotSize: num(c.mascotSize, 12, 90, 30),
     mascotX: num(c.mascotX, -1, 2, 0),
+    fontScale: num(c.fontScale, 0.6, 1.8, 1),
     createdAt: num(c.createdAt, 0, 9e15, Date.now()),
   };
 }
