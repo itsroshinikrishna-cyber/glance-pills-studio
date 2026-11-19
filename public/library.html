@@ -66,7 +66,7 @@ const INTRO = {
 let kind = new URLSearchParams(location.search).get("tab") || "image";
 if (!INTRO[kind]) kind = "image";
 const $ = s => document.querySelector(s);
-let cfg, ITEMS=[];
+let cfg, ITEMS=[], lastErr="";
 
 function fmtDate(s){ return new Date(s).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }
 
@@ -76,7 +76,8 @@ async function load(){
   $("#bar").hidden = kind==="generated"; $("#q").value="";
   const grid=$("#grid"); grid.innerHTML='<div class="empty">Loading…</div>';
   cfg = cfg || await PS.config();
-  $("#note").innerHTML = cfg.offline ? '<div class="note">'+PS.offlineMsg(cfg)+' The library needs it, so uploads are switched off here.</div>' : "";
+  $("#note").innerHTML = cfg.offline ? '<div class="note">'+PS.offlineMsg(cfg)+' The library needs it, so uploads are switched off here.</div>'
+    : lastErr ? '<div class="note"><b>Upload failed:</b> '+PS.esc(lastErr)+'. Open <a href="api/health" target="_blank">api/health</a> to check the storage setup.</div>' : "";
   if (cfg.offline){ $("#bar").hidden=true; grid.innerHTML='<div class="empty">Library unavailable until storage is connected.</div>'; return; }
   try{ ITEMS=await PS.listAssets(kind); }catch(e){ grid.innerHTML=`<div class="empty">${PS.esc(e.message)}</div>`; return; }
   $("#q").hidden=ITEMS.length<8; draw();
@@ -101,7 +102,8 @@ function draw(){
 }
 async function upload(files){
   let ok=0;
-  for(const f of files){ try{ await PS.uploadFile(kind,f); ok++; PS.toast(`Uploading ${ok}/${files.length}…`); }catch(e){ PS.toast(e.message); } }
+  lastErr="";
+  for(const f of files){ try{ await PS.uploadFile(kind,f); ok++; PS.toast(`Uploading ${ok}/${files.length}…`); }catch(e){ lastErr=f.name+": "+e.message; PS.toast(e.message); } }
   if(ok) PS.toast(`${ok} uploaded`); load();
 }
 $("#tabs").onclick=e=>{const b=e.target.closest("button"); if(!b) return; kind=b.dataset.k; history.replaceState(null,"","?tab="+kind); load();};

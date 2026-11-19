@@ -27,7 +27,7 @@ export function sanitize(c) {
     palette: oneOf(c.palette, ["purple", "pink", "blue", "yellow"], "purple"),
     mascot: url(c.mascot),
     mascotSize: num(c.mascotSize, 12, 90, 30),
-    mascotX: num(c.mascotX, 0, 1, 0),
+    mascotX: num(c.mascotX, -1, 2, 0),
     createdAt: num(c.createdAt, 0, 9e15, Date.now()),
   };
 }

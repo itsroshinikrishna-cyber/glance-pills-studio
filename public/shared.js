@@ -48,6 +48,7 @@ window.PS = (function () {
   /* ---------- UI helpers ---------- */
   const style = document.createElement("style");
   style.textContent = `
+  [hidden]{display:none!important}
   .ps-nav{display:flex;gap:2px}
   .ps-nav a{padding:8px 14px;font-weight:700;font-size:13px;color:#15131a;text-decoration:none;border-bottom:3px solid transparent}
   .ps-nav a:hover{background:#f1eef8}
@@ -85,7 +86,7 @@ window.PS = (function () {
   function nav(active) {
     const n = document.getElementById("nav"); if (!n) return;
     n.className = "ps-nav";
-    n.innerHTML = [["studio", "./", "Studio"], ["bulk", "bulk", "Bulk"], ["library", "library", "Library"], ["generate", "generate", "Generate"]]
+    n.innerHTML = [["studio", "./", "Studio"], ["bulk", "bulk", "Bulk"], ["mascots", "mascots", "Mascots"], ["library", "library", "Library"], ["generate", "generate", "Generate"]]
       .map(([k, h, t]) => `<a href="${h}" class="${k === active ? "on" : ""}">${t}</a>`).join("");
   }
   let toastT;

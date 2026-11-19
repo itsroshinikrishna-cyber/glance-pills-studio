@@ -119,14 +119,34 @@ function drawMascotDefault(ctx,x,y,s){
   ctx.fillStyle="#fff";
   for(const ex of [.36,.62]){ ctx.beginPath(); ctx.ellipse(x+s*ex,y+s*.55,s*.055,s*.1,0,0,Math.PI*2); ctx.fill(); }
 }
+/* Bounding box of the visible (non-transparent) pixels of a mascot image, cached per image. */
+const trimCache=new Map();
+function trimBox(img,src){
+  let t=trimCache.get(src); if(t) return t;
+  const w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+  t={x:0,y:0,w,h};
+  try{
+    const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+    const g=cv.getContext("2d",{willReadFrequently:true}); g.drawImage(img,0,0);
+    const d=g.getImageData(0,0,w,h).data; let x0=w,y0=h,x1=-1,y1=-1;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(d[(y*w+x)*4+3]>10){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    if(x1>=0) t={x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};
+  }catch(e){}
+  trimCache.set(src,t); return t;
+}
 function drawPrompt(ctx,c,W,H){
   const p=PALETTES[c.palette]||PALETTES.purple;
   const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,p.from); g.addColorStop(1,p.to);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const mh=Math.max(12,Math.min(90,+c.mascotSize||30)), m=c.mascot?getImg(c.mascot):null;
-  // mascotX: 0 = left edge, 0.5 = centre, 1 = right edge (inside the 14px margins)
-  const mw=m?mh*m.width/m.height:mh, mx=14+Math.max(0,Math.min(1,+c.mascotX||0))*Math.max(0,W-28-mw);
-  if(m) ctx.drawImage(m,mx,14,mw,mh); else drawMascotDefault(ctx,mx,14,mh);
+  // The mascot is measured by its VISIBLE artwork (transparent padding in the PNG is ignored), so
+  // "Left" lines up with the text and the size means the size you see.
+  // mascotX: 0 = aligned with the left text margin, 0.5 = centre, 1 = aligned with the right margin,
+  // below 0 / above 1 tucks it into the corner, down to the card edge at -1 and 2.
+  const tb=m?trimBox(m,c.mascot):null, mw=tb?mh*tb.w/tb.h:mh;
+  const tx=Math.max(-1,Math.min(2,+c.mascotX||0)), span=Math.max(0,W-28-mw);
+  const mx=tx<0?14+tx*14:tx>1?14+span+(tx-1)*14:14+tx*span;
+  if(m) ctx.drawImage(m,tb.x,tb.y,tb.w,tb.h,mx,14,mw,mh); else drawMascotDefault(ctx,mx,14,mh);
   ctx.fillStyle="#14121a"; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
   // The question sits below the mascot. A bigger mascot pushes it down, and the text shrinks a little if it would run off the card.
   const top=14+mh+26, bottom=H-(c.subtext?24:14);

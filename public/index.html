@@ -193,7 +193,8 @@
       <input type="range" data-k="mascotSize" min="16" max="80" step="1">
       <label>Mascot position</label>
       <div class="seg" data-k="mascotX"><button data-v="0">Left</button><button data-v="0.5">Centre</button><button data-v="1">Right</button></div>
-      <input type="range" data-k="mascotX" min="0" max="1" step="0.01" style="margin-top:6px">
+      <input type="range" data-k="mascotX" min="-1" max="2" step="0.01" style="margin-top:6px">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Slide past Left or Right to tuck the mascot into the corner.</div>
       <div class="count" id="wcp" style="margin-top:8px"></div>
     </fieldset>
 
@@ -463,6 +464,7 @@ $("#btnZip").onclick=async()=>{
     if(PS.TREATMENTS[p.get("treatment")]) c.treatment=p.get("treatment");
     c.category=(p.get("category")||"").slice(0,60);
     const img=p.get("img"); if(img&&(img.startsWith("https://")||img.startsWith("/files/"))) c.img=img;
+    const mas=p.get("mascot"); if(c.type==="prompt"&&mas&&(mas.startsWith("https://")||mas.startsWith("/files/"))) c.mascot=mas;
     state.cards.unshift(c); sel=c.id; save(c); history.replaceState(null,"","./");
   } else sel=(state.cards.some(c=>c.id===p.get("open"))?p.get("open"):state.cards[0]?.id);
   if(p.get("open")) history.replaceState(null,"","./");

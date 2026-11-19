@@ -375,7 +375,8 @@ function buildEditor(){
     <label>Category subtext (optional)</label><input type="text" data-f="subtext">
     <label>Mascot size</label><input type="range" data-f="mascotSize" min="16" max="80" step="1">
     <label>Mascot position</label><div class="seg" id="edMx"><button data-mx="0">Left</button><button data-mx="0.5">Centre</button><button data-mx="1">Right</button></div>
-    <input type="range" data-f="mascotX" min="0" max="1" step="0.01" style="margin-top:6px">
+    <input type="range" data-f="mascotX" min="-1" max="2" step="0.01" style="margin-top:6px">
+    <div class="hint" style="margin-top:4px">Slide past Left or Right to tuck the mascot into the corner.</div>
     <label>Mascot</label><div id="edMascot" class="mascots"></div>
     <label>Colour</label><div class="seg" id="edPal">${BRAND.map(p=>`<button data-p="${p}">${p[0].toUpperCase()+p.slice(1)}</button>`).join("")}</div>`
   :`
